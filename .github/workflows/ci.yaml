@@ -1,0 +1,86 @@
+name: frontend-ci
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE: raedbari/frontend   # عدّلها لو مستودعك مختلف
+
+jobs:
+  build_and_push:
+    name: Build & Push Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and push (tag = commit SHA)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_BASE=${{ vars.API_BASE }}   # مثال: http://the-phantoms.duckdns.org:30000
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy_to_k8s:
+    name: Update image & rollout on Kubernetes
+    needs: build_and_push
+    runs-on: self-hosted   # الـrunner على EC2 الذي لديه kubectl موصول بالكلاستر
+    env:
+      NS: project-env
+      DEPLOYMENT: frontend
+      CONTAINER: frontend
+      IMAGE: raedbari/frontend
+      TAG: ${{ github.sha }}
+    steps:
+      # اختياري: لو خزّنت kubeconfig كـ Secret باسم KUBECONFIG
+      - name: (Optional) Write kubeconfig from secret
+        if: ${{ secrets.KUBECONFIG != '' }}
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
+
+      - name: Sanity check
+        run: |
+          kubectl version --client
+          kubectl -n "$NS" get deploy "$DEPLOYMENT" -o name
+
+      - name: Set image and wait for rollout
+        run: |
+          kubectl -n "$NS" set image deploy/$DEPLOYMENT \
+            $CONTAINER="${IMAGE}:${TAG}"
+
+          kubectl -n "$NS" annotate deploy/$DEPLOYMENT \
+            ci.commit="${GITHUB_SHA}" ci.image="${IMAGE}:${TAG}" --overwrite
+
+          kubectl -n "$NS" rollout status deploy/$DEPLOYMENT --timeout=300s
+
+      - name: Show resulting image
+        run: |
+          echo -n "Image now: "
+          kubectl -n "$NS" get deploy "$DEPLOYMENT" \
+            -o jsonpath='{.spec.template.spec.containers[?(@.name=="'"$CONTAINER"'")].image}{"\n"}'
+
+      # اختياري: رجوع تلقائي عند فشل الرول آوت
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Rolling back…"
+          kubectl -n "$NS" rollout undo deploy/$DEPLOYMENT || true
