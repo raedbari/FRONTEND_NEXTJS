@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { apiPost } from "@/lib/api";
 
-// Minimal shape matching your FastAPI AppSpec
 type EnvVar = { name: string; value: string };
 
+const DEFAULT_NS = "project-env";
+
 export default function DeployPage() {
-  // Default values that match your backend defaults
+  // form state
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
   const [tag, setTag] = useState("");
@@ -17,6 +18,8 @@ export default function DeployPage() {
   const [readyPath, setReadyPath] = useState("/ready");
   const [metricsPath, setMetricsPath] = useState("/metrics");
   const [env, setEnv] = useState<EnvVar[]>([]);
+  const [namespace, setNamespace] = useState<string>(DEFAULT_NS);
+
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +40,7 @@ export default function DeployPage() {
     e.preventDefault();
     setError(null);
     setResult(null);
+
     if (!nameOk) {
       setError("Invalid name: must be lowercase, digits, hyphen (k8s-compliant).");
       return;
@@ -47,23 +51,23 @@ export default function DeployPage() {
     }
 
     const payload = {
-      name,
-      image,
-      tag,
+      name: name.trim(),
+      image: image.trim(),
+      tag: tag.trim(),
       port: Number(port),
       replicas: Number(replicas),
-      health_path: healthPath,
-      readiness_path: readyPath,
-      metrics_path: metricsPath,
+      health_path: (healthPath || "/").trim() || "/",
+      readiness_path: (readyPath || "/").trim() || "/",
+      metrics_path: (metricsPath || "/metrics").trim() || "/metrics",
       env: env.filter((e) => e.name && e.value),
-      // app_label, service_name, resources -> omitted to use backend defaults
+      namespace: (namespace || DEFAULT_NS).trim() || DEFAULT_NS,
+      // app_label/service_name/resources: نتركها للـbackend بقيمه الافتراضية
     };
 
     try {
       setSubmitting(true);
-      const resp = await apiPost("/apps/deploy", payload);
+      await apiPost("/apps/deploy", payload);
       setResult("Deployed successfully.");
-      console.log("Deploy response:", resp);
     } catch (err: any) {
       setError(err?.message || "Deploy failed");
     } finally {
@@ -166,11 +170,26 @@ export default function DeployPage() {
           </div>
         </div>
 
+        {/* Namespace */}
+        <div>
+          <label>Namespace</label>
+          <input
+            type="text"
+            className="input"
+            placeholder="project-env"
+            value={namespace}
+            onChange={(e) => setNamespace(e.target.value.trim())}
+            required
+          />
+        </div>
+
         {/* Env vars */}
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <label>Environment variables</label>
-            <button type="button" className="btn btn-ghost" onClick={addEnv}>+ Add</button>
+            <button type="button" className="btn btn-ghost" onClick={addEnv}>
+              + Add
+            </button>
           </div>
           {env.length === 0 && <small style={{ color: "var(--muted)" }}>No env vars yet.</small>}
           <div style={{ display: "grid", gap: 8, marginTop: 6 }}>
@@ -188,7 +207,9 @@ export default function DeployPage() {
                   value={row.value}
                   onChange={(e) => updateEnv(i, "value", e.target.value)}
                 />
-                <button type="button" className="btn btn-ghost" onClick={() => removeEnv(i)}>Remove</button>
+                <button type="button" className="btn btn-ghost" onClick={() => removeEnv(i)}>
+                  Remove
+                </button>
               </div>
             ))}
           </div>
@@ -196,12 +217,18 @@ export default function DeployPage() {
 
         {/* Submit */}
         <div style={{ display: "flex", gap: 10 }}>
-          <button className="btn btn-primary" disabled={submitting || !nameOk}>Deploy</button>
+          <button className="btn btn-primary" disabled={submitting || !nameOk}>
+            Deploy
+          </button>
           {submitting && <span>Deploying…</span>}
         </div>
 
         {result && <div className="badge">{result}</div>}
-        {error && <div className="badge" style={{ borderColor: "#f66", color: "#ffd9d9" }}>{error}</div>}
+        {error && (
+          <div className="badge" style={{ borderColor: "#f66", color: "#ffd9d9" }}>
+            {error}
+          </div>
+        )}
       </form>
     </section>
   );
