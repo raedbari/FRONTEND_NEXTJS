@@ -100,6 +100,31 @@ body {
 
 label { display: block; margin: 0 0 6px 2px; color: var(--muted); font-size: 13px; }
 
+/* --- Modal (global) --- */
+.ui-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  display: grid; place-items: center; z-index: 40;
+}
+.ui-modal {
+  width: 720px; max-width: 92vw;
+  background: linear-gradient(180deg, rgba(26,30,39,.96), rgba(20,23,31,.96));
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,.45);
+  color: var(--fg);
+}
+.ui-modal-hd { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.ui-modal-bd { padding: 16px 20px; }
+.ui-modal-ft { padding: 14px 20px; border-top: 1px solid rgba(255,255,255,.06); }
+
+.ui-input { width:100%; background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); padding:10px 12px; border-radius:10px; color: var(--fg); }
+.ui-label { display:block; font-size:12px; opacity:.9; }
+.ui-label > span { display:block; margin:0 0 6px 2px; color: var(--muted); }
+
+/* عندك أزرار عامة بالفعل، إن احتجت: */
+.btn { background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); color:#fff; border:none; padding:10px 16px; border-radius:12px; }
+.btn[disabled] { opacity:.6; cursor:not-allowed; }
+.btn-ghost { background: transparent; border:1px solid rgba(255,255,255,.15); color: var(--fg); }
+
 
 /* Design tokens  */
 /* :root {
