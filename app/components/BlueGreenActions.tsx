@@ -5,21 +5,25 @@
 import React from "react";
 
 import PrepareModal from "./PrepareModal";
+// ملاحظة: لأن lib/ خارج مجلد app/ فالمسار النسبي من app/components هو ../../lib/api
+import { bgPromote, bgRollback } from "../apis/bluegreen";
+
+type Props = {
+  name: string;
+  namespace: string;
+  /** Full image string from status row, e.g. "nginx:1.27" */
+  image?: string;
+  onChanged?: () => void;
+};
 
 export default function BlueGreenActions({
   name,
   namespace,
   image,
   onChanged,
-}: {
-  name: string;
-  namespace: string;
-  /** Full image string from status row, e.g. "nginx:1.27" */
-  image?: string;
-  onChanged?: () => void;
-}) {
+}: Props) {
   const [open, setOpen] = React.useState(false);
-  const [busy, setBusy] = React.useState<string | null>(null);
+  const [busy, setBusy] = React.useState<"promote" | "rollback" | null>(null);
 
   function parseImage(img?: string) {
     if (!img) return { repo: "", tag: "" };
@@ -34,6 +38,7 @@ export default function BlueGreenActions({
       setBusy("promote");
       await bgPromote(name, namespace);
       onChanged?.();
+      alert("Promote done ✅");
     } catch (e) {
       console.error(e);
       alert("Promote failed: " + (e as Error).message);
@@ -47,6 +52,7 @@ export default function BlueGreenActions({
       setBusy("rollback");
       await bgRollback(name, namespace);
       onChanged?.();
+      alert("Rollback done ✅");
     } catch (e) {
       console.error(e);
       alert("Rollback failed: " + (e as Error).message);
@@ -64,6 +70,7 @@ export default function BlueGreenActions({
       >
         Prepare
       </button>
+
       <button
         className="btn btn-sm"
         onClick={doPromote}
@@ -72,6 +79,7 @@ export default function BlueGreenActions({
       >
         {busy === "promote" ? "…" : "Promote"}
       </button>
+
       <button
         className="btn btn-sm"
         onClick={doRollback}
@@ -102,62 +110,3 @@ export default function BlueGreenActions({
     </div>
   );
 }
-
-// ==========================
-// File: lib/api.ts
-// ==========================
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
-
-async function postJSON<T = any>(path: string, body: any): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    cache: "no-store",
-  });
-  if (!res.ok) {
-    let msg = `${res.status} ${res.statusText}`;
-    try { const j = await res.json(); msg = j.detail || JSON.stringify(j); } catch {}
-    throw new Error(msg);
-  }
-  return res.json();
-}
-
-export function bgPrepare(spec: any) {
-  return postJSON("/apps/bluegreen/prepare", spec);
-}
-export function bgPromote(name: string, namespace: string) {
-  return postJSON("/apps/bluegreen/promote", { name, namespace });
-}
-export function bgRollback(name: string, namespace: string) {
-  return postJSON("/apps/bluegreen/rollback", { name, namespace });
-}
-
-// ==========================
-// Patch: app/page.tsx (status table) — add the new column & actions
-// NOTE: Replace the cell where you render the Scale input with an extra cell to the right.
-// Example snippet to integrate (pseudo around your existing map of items):
-/*
-  <th style={{textAlign:'left'}}>Blue/Green</th>
-  ...
-  {items.map((row) => (
-    <tr key={row.name}>
-      ...existing cells...
-      <td>
-        <BlueGreenActions
-          name={row.name}
-          namespace={selectedNamespace || 'default'}
-          image={row.image}
-          onChanged={refresh}
-        />
-      </td>
-    </tr>
-  ))}
-*/
-
-// ==========================
-// Env: .env.local (frontend)
-// ==========================
-/*
-NEXT_PUBLIC_API_BASE=http://the-phantoms.duckdns.org:30000
-*/
