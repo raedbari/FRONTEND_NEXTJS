@@ -1,17 +1,13 @@
-// ==========================
-// File: app/components/BlueGreenActions.tsx
-// ==========================
 "use client";
 import React from "react";
-
 import PrepareModal from "./PrepareModal";
-// ملاحظة: لأن lib/ خارج مجلد app/ فالمسار النسبي من app/components هو ../../lib/api
+import PromoteModal from "./PromoteModal";
+import RollbackModal from "./RollbackModal";
 import { bgPromote, bgRollback } from "../apis/bluegreen";
 
 type Props = {
-  name: string;
-  namespace: string;
-  /** Full image string from status row, e.g. "nginx:1.27" */
+  name?: string;       // ← اجعلها اختيارية لأن صفحة /bluegreen لا تمررها
+  namespace?: string;  // ← كذلك
   image?: string;
   onChanged?: () => void;
 };
@@ -22,89 +18,75 @@ export default function BlueGreenActions({
   image,
   onChanged,
 }: Props) {
-  const [open, setOpen] = React.useState(false);
-  const [busy, setBusy] = React.useState<"promote" | "rollback" | null>(null);
+  const [openPrepare, setOpenPrepare]   = React.useState(false);
+  const [openPromote, setOpenPromote]   = React.useState(false);
+  const [openRollback, setOpenRollback] = React.useState(false);
+  const [busy, setBusy] = React.useState<"promote"|"rollback"|null>(null);
 
   function parseImage(img?: string) {
     if (!img) return { repo: "", tag: "" };
     const idx = img.lastIndexOf(":");
-    if (idx === -1) return { repo: img, tag: "" };
-    return { repo: img.slice(0, idx), tag: img.slice(idx + 1) };
+    return idx === -1 ? { repo: img, tag: "" } : { repo: img.slice(0, idx), tag: img.slice(idx + 1) };
   }
   const { repo, tag } = parseImage(image);
 
+  const hasNameNs = Boolean(name && namespace);
+
   async function doPromote() {
+    if (!hasNameNs) { setOpenPromote(true); return; } // ← افتح مودال لو ناقصة
     try {
       setBusy("promote");
-      await bgPromote(name, namespace);
+      await bgPromote(name!, namespace!);
       onChanged?.();
       alert("Promote done ✅");
-    } catch (e) {
-      console.error(e);
-      alert("Promote failed: " + (e as Error).message);
-    } finally {
-      setBusy(null);
-    }
+    } catch (e:any) {
+      alert("Promote failed: " + (e?.message || e));
+    } finally { setBusy(null); }
   }
 
   async function doRollback() {
+    if (!hasNameNs) { setOpenRollback(true); return; } // ← افتح مودال لو ناقصة
     try {
       setBusy("rollback");
-      await bgRollback(name, namespace);
+      await bgRollback(name!, namespace!);
       onChanged?.();
       alert("Rollback done ✅");
-    } catch (e) {
-      console.error(e);
-      alert("Rollback failed: " + (e as Error).message);
-    } finally {
-      setBusy(null);
-    }
+    } catch (e:any) {
+      alert("Rollback failed: " + (e?.message || e));
+    } finally { setBusy(null); }
   }
 
   return (
     <div className="flex items-center gap-2">
-      <button
-        className="btn btn-sm"
-        onClick={() => setOpen(true)}
-        title="Prepare a preview deployment"
-      >
-        Prepare
+      <button className="btn btn-sm" onClick={() => setOpenPrepare(true)}>Prepare</button>
+      <button className="btn btn-sm" onClick={doPromote} disabled={busy!==null}>
+        {busy==="promote" ? "…" : "Promote"}
+      </button>
+      <button className="btn btn-sm" onClick={doRollback} disabled={busy!==null}>
+        {busy==="rollback" ? "…" : "Rollback"}
       </button>
 
-      <button
-        className="btn btn-sm"
-        onClick={doPromote}
-        disabled={busy !== null}
-        title="Swap traffic to preview (zero-downtime)"
-      >
-        {busy === "promote" ? "…" : "Promote"}
-      </button>
-
-      <button
-        className="btn btn-sm"
-        onClick={doRollback}
-        disabled={busy !== null}
-        title="Instantly switch back to previous version"
-      >
-        {busy === "rollback" ? "…" : "Rollback"}
-      </button>
-
-      {open && (
+      {openPrepare && (
         <PrepareModal
-          onClose={() => setOpen(false)}
-          initial={{
-            name,
-            namespace,
-            image: repo,
-            tag,
-            port: 80,
-            health_path: "/",
-            replicas: 1,
-          }}
-          afterSubmit={() => {
-            setOpen(false);
-            onChanged?.();
-          }}
+          onClose={() => setOpenPrepare(false)}
+          initial={{ name: name ?? "", namespace: namespace ?? "project-env", image: repo, tag, port: 80, health_path:"/", replicas:1 }}
+          afterSubmit={() => { setOpenPrepare(false); onChanged?.(); }}
+        />
+      )}
+
+      {openPromote && (
+        <PromoteModal
+          onClose={() => setOpenPromote(false)}
+          initial={{ name, namespace: namespace ?? "project-env" }}
+          afterSubmit={() => { setOpenPromote(false); onChanged?.(); }}
+        />
+      )}
+
+      {openRollback && (
+        <RollbackModal
+          onClose={() => setOpenRollback(false)}
+          initial={{ name, namespace: namespace ?? "project-env" }}
+          afterSubmit={() => { setOpenRollback(false); onChanged?.(); }}
         />
       )}
     </div>
