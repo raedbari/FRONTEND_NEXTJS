@@ -25,11 +25,11 @@ export default function Home() {
         </p>
 
         {/* الشارات */}
-        <div className="badges" style={{ marginTop: 16 }}>
+        {/* <div className="badges" style={{ marginTop: 16 }}>
           {["Terraform","Docker","Kubernetes","GitHub Actions","Prometheus","Grafana","Loki","Ansible","Chaos Mesh"].map((t) => (
             <Badge key={t}>{t}</Badge>
           ))}
-        </div>
+        </div> */}
 
         {/* فوتر بسيط */}
         <p style={{ color: "var(--muted)", marginTop: 14, fontSize: 13 }}>
