@@ -3,7 +3,6 @@
 
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
-import BlueGreenActions from "@/app/components/BlueGreenActions";
 
 // ===== أنواع البيانات القادمة من /apps/status =====
 type StatusItem = {
@@ -14,16 +13,11 @@ type StatusItem = {
   available: number;
   updated: number;
   conditions: Record<string, string>;
-  // حقول اختيارية أضفناها في الباكند
   svc_selector?: Record<string, string> | null;
   preview_ready?: boolean | null;
 };
 
 type StatusResponse = { items: StatusItem[] };
-
-// namespace الافتراضي لأزرار blue/green
-const DEFAULT_NS =
-  process.env.NEXT_PUBLIC_DEFAULT_NAMESPACE?.trim() || "project-env";
 
 export default function AppsStatusPage() {
   const [items, setItems] = useState<StatusItem[]>([]);
@@ -81,7 +75,6 @@ export default function AppsStatusPage() {
                 <th style={{ padding: 8 }}>Conditions</th>
                 <th style={{ padding: 8 }}>Traffic</th>
                 <th style={{ padding: 8 }}>Scale</th>
-                <th style={{ padding: 8 }}>Blue/Green</th>
               </tr>
             </thead>
 
@@ -112,7 +105,7 @@ export default function AppsStatusPage() {
                       ))}
                     </td>
 
-                    {/* Traffic badge (svc selector role) */}
+                    {/* Traffic badge */}
                     <td style={{ padding: 8 }}>
                       <span
                         className={`px-2 py-1 rounded text-xs ${
@@ -149,23 +142,13 @@ export default function AppsStatusPage() {
                         </button>
                       </div>
                     </td>
-
-                    {/* Blue/Green actions (زر Prepare/Promote/Rollback في كومبوننت واحدة) */}
-                    <td style={{ padding: 8 }}>
-                      <BlueGreenActions
-                        name={it.name}
-                        namespace={DEFAULT_NS}
-                        image={it.image}
-                        onChanged={load}
-                      />
-                    </td>
                   </tr>
                 );
               })}
 
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={10} style={{ padding: 12, color: "var(--muted)" }}>
+                  <td colSpan={9} style={{ padding: 12, color: "var(--muted)" }}>
                     No apps yet. Go to <a href="/apps/new">Deploy App</a>.
                   </td>
                 </tr>
