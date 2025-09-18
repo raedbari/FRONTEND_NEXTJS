@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
+import BlueGreenActions from "./components/BlueGreenActions";
 
 // ===== Types coming from backend /apps/status =====
 type StatusItem = {
@@ -120,20 +121,14 @@ export default function AppsStatusPage() {
                     </td>
 
                     {/* badge: svc role */}
-                    <td style={{ padding: 8 }}>
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          role === "preview"
-                            ? "bg-sky-600/30 text-sky-300"
-                            : role === "active"
-                            ? "bg-emerald-600/30 text-emerald-300"
-                            : "bg-zinc-600/30 text-zinc-300"
-                        }`}
-                        title="Service selector role"
-                      >
-                        svc role: {role}
-                      </span>
+                   <td style={{ padding: 8 }}>
+                     <BlueGreenActions
+                      name={it.name}
+                      namespace={DEFAULT_NS}
+                      image={it.image}
+                      onChanged={load} />
                     </td>
+
 
                     {/* Scale controls */}
                     <td style={{ padding: 8 }}>
