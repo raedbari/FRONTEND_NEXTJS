@@ -13,6 +13,7 @@ type StatusItem = {
   available: number;
   updated: number;
   conditions: Record<string, string>;
+  // حقول اختيارية نرسلها من الباكند (إن وُجدت)
   svc_selector?: Record<string, string> | null;
   preview_ready?: boolean | null;
 };
@@ -80,7 +81,13 @@ export default function AppsStatusPage() {
 
             <tbody>
               {items.map((it) => {
-                const role = it.svc_selector?.role ?? "unknown";
+                // الدور الحقيقي القادم من الـService selector
+                const rawRole = it.svc_selector?.role ?? "unknown";
+                // الدور المعروض: لو الصف نفسه لاسم ينتهي بـ -preview والخدمة على preview نعرضه Active
+                const displayRole =
+                  it.name.endsWith("-preview") && rawRole === "preview"
+                    ? "active"
+                    : rawRole;
 
                 return (
                   <tr key={it.name} style={{ borderTop: "1px solid rgba(255,255,255,.06)" }}>
@@ -105,19 +112,19 @@ export default function AppsStatusPage() {
                       ))}
                     </td>
 
-                    {/* Traffic badge */}
+                    {/* Traffic badge (svc selector role) */}
                     <td style={{ padding: 8 }}>
                       <span
                         className={`px-2 py-1 rounded text-xs ${
-                          role === "preview"
-                            ? "bg-sky-600/30 text-sky-300"
-                            : role === "active"
+                          displayRole === "active"
                             ? "bg-emerald-600/30 text-emerald-300"
+                            : displayRole === "preview"
+                            ? "bg-sky-600/30 text-sky-300"
                             : "bg-zinc-600/30 text-zinc-300"
                         }`}
-                        title="Service selector role"
+                        title="Service selector role (effective)"
                       >
-                        svc role: {role}
+                        svc role: {displayRole}
                       </span>
                     </td>
 
