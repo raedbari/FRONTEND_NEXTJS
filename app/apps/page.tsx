@@ -1,10 +1,11 @@
+// app/apps/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
-import BlueGreenActions from "./components/BlueGreenActions";
+import BlueGreenActions from "@/app/components/BlueGreenActions";
 
-// ===== Types coming from backend /apps/status =====
+// ===== أنواع البيانات القادمة من /apps/status =====
 type StatusItem = {
   name: string;
   image: string;
@@ -13,14 +14,14 @@ type StatusItem = {
   available: number;
   updated: number;
   conditions: Record<string, string>;
-
-  // ← جديدان (اختياريان) من الباكند
+  // حقول اختيارية أضفناها في الباكند
   svc_selector?: Record<string, string> | null;
   preview_ready?: boolean | null;
 };
+
 type StatusResponse = { items: StatusItem[] };
 
-// namespace الافتراضي عند نداء promote/rollback من الجدول
+// namespace الافتراضي لأزرار blue/green
 const DEFAULT_NS =
   process.env.NEXT_PUBLIC_DEFAULT_NAMESPACE?.trim() || "project-env";
 
@@ -29,7 +30,6 @@ export default function AppsStatusPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [scaling, setScaling] = useState<Record<string, number>>({});
-  const [promoting, setPromoting] = useState<string | null>(null);
 
   async function load() {
     try {
@@ -46,26 +46,10 @@ export default function AppsStatusPage() {
 
   async function doScale(name: string, replicas: number) {
     try {
-      await apiPost(`/apps/scale`, { name, replicas });
+      await apiPost("/apps/scale", { name, replicas });
       await load();
     } catch (e: any) {
       alert(e?.message || "Scale failed");
-    }
-  }
-
-  async function doPromote(name: string) {
-    try {
-      setPromoting(name);
-      await apiPost("/apps/bluegreen/promote", {
-        name,
-        namespace: DEFAULT_NS,
-      });
-      await load();
-      alert("Promote done ✅");
-    } catch (e: any) {
-      alert(e?.message || "Promote failed");
-    } finally {
-      setPromoting(null);
     }
   }
 
@@ -95,40 +79,54 @@ export default function AppsStatusPage() {
                 <th style={{ padding: 8 }}>Available</th>
                 <th style={{ padding: 8 }}>Updated</th>
                 <th style={{ padding: 8 }}>Conditions</th>
-                <th style={{ padding: 8 }}>Traffic</th>   {/* badge */}
+                <th style={{ padding: 8 }}>Traffic</th>
                 <th style={{ padding: 8 }}>Scale</th>
-                <th style={{ padding: 8 }}>Blue/Green</th> {/* actions */}
+                <th style={{ padding: 8 }}>Blue/Green</th>
               </tr>
             </thead>
+
             <tbody>
               {items.map((it) => {
                 const role = it.svc_selector?.role ?? "unknown";
-                const previewReady = Boolean(it.preview_ready);
 
                 return (
                   <tr key={it.name} style={{ borderTop: "1px solid rgba(255,255,255,.06)" }}>
+                    {/* Name */}
                     <td style={{ padding: 8, fontWeight: 700 }}>{it.name}</td>
+
+                    {/* Image */}
                     <td style={{ padding: 8, fontFamily: "monospace" }}>{it.image}</td>
+
+                    {/* Numbers */}
                     <td style={{ padding: 8 }}>{it.desired}</td>
                     <td style={{ padding: 8 }}>{it.current}</td>
                     <td style={{ padding: 8 }}>{it.available}</td>
                     <td style={{ padding: 8 }}>{it.updated}</td>
 
+                    {/* Conditions */}
                     <td style={{ padding: 8 }}>
                       {(Object.entries(it.conditions || {})).map(([k, v]) => (
-                        <span key={k} className="badge" style={{ marginRight: 6 }}>{k}:{v}</span>
+                        <span key={k} className="badge" style={{ marginRight: 6 }}>
+                          {k}:{v}
+                        </span>
                       ))}
                     </td>
 
-                    {/* badge: svc role */}
-                   <td style={{ padding: 8 }}>
-                     <BlueGreenActions
-                      name={it.name}
-                      namespace={DEFAULT_NS}
-                      image={it.image}
-                      onChanged={load} />
+                    {/* Traffic badge (svc selector role) */}
+                    <td style={{ padding: 8 }}>
+                      <span
+                        className={`px-2 py-1 rounded text-xs ${
+                          role === "preview"
+                            ? "bg-sky-600/30 text-sky-300"
+                            : role === "active"
+                            ? "bg-emerald-600/30 text-emerald-300"
+                            : "bg-zinc-600/30 text-zinc-300"
+                        }`}
+                        title="Service selector role"
+                      >
+                        svc role: {role}
+                      </span>
                     </td>
-
 
                     {/* Scale controls */}
                     <td style={{ padding: 8 }}>
@@ -136,7 +134,7 @@ export default function AppsStatusPage() {
                         <input
                           className="input"
                           type="number"
-                          min={1}
+                          min={0}
                           defaultValue={it.desired}
                           onChange={(e) =>
                             setScaling((s) => ({ ...s, [it.name]: Number(e.target.value) }))
@@ -145,27 +143,21 @@ export default function AppsStatusPage() {
                         />
                         <button
                           className="btn btn-primary"
-                          onClick={() => doScale(it.name, scaling[it.name] || it.desired)}
+                          onClick={() => doScale(it.name, scaling[it.name] ?? it.desired)}
                         >
                           Scale
                         </button>
                       </div>
                     </td>
 
-                    {/* Blue/Green actions (Promote only for الآن) */}
+                    {/* Blue/Green actions (زر Prepare/Promote/Rollback في كومبوننت واحدة) */}
                     <td style={{ padding: 8 }}>
-                      <button
-                        className="btn btn-sm"
-                        disabled={!previewReady || promoting === it.name}
-                        onClick={() => doPromote(it.name)}
-                        title={
-                          previewReady
-                            ? "Swap traffic to preview (zero-downtime)"
-                            : "Preview not Ready yet"
-                        }
-                      >
-                        {promoting === it.name ? "…" : "Promote"}
-                      </button>
+                      <BlueGreenActions
+                        name={it.name}
+                        namespace={DEFAULT_NS}
+                        image={it.image}
+                        onChanged={load}
+                      />
                     </td>
                   </tr>
                 );
