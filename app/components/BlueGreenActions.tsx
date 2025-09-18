@@ -1,15 +1,15 @@
+// app/components/BlueGreenActions.tsx
 "use client";
+
 import React from "react";
 import PrepareModal from "./PrepareModal";
-import PromoteModal from "./PromoteModal";
-import RollbackModal from "./RollbackModal";
-import { bgPromote, bgRollback } from "../apis/bluegreen";
+import { apiPost } from "@/lib/api";
 
 type Props = {
-  name?: string;       // ← اجعلها اختيارية لأن صفحة /bluegreen لا تمررها
-  namespace?: string;  // ← كذلك
-  image?: string;
-  onChanged?: () => void;
+  name: string;
+  namespace: string;
+  image?: string;            // من صف الحالة (اختياري)
+  onChanged?: () => void;    // ننعش الجدول بعد النجاح
 };
 
 export default function BlueGreenActions({
@@ -18,75 +18,91 @@ export default function BlueGreenActions({
   image,
   onChanged,
 }: Props) {
-  const [openPrepare, setOpenPrepare]   = React.useState(false);
-  const [openPromote, setOpenPromote]   = React.useState(false);
-  const [openRollback, setOpenRollback] = React.useState(false);
-  const [busy, setBusy] = React.useState<"promote"|"rollback"|null>(null);
-
-  function parseImage(img?: string) {
-    if (!img) return { repo: "", tag: "" };
-    const idx = img.lastIndexOf(":");
-    return idx === -1 ? { repo: img, tag: "" } : { repo: img.slice(0, idx), tag: img.slice(idx + 1) };
-  }
-  const { repo, tag } = parseImage(image);
-
-  const hasNameNs = Boolean(name && namespace);
+  const [openPrepare, setOpenPrepare] = React.useState(false);
+  const [busy, setBusy] = React.useState<null | "promote" | "rollback">(null);
 
   async function doPromote() {
-    if (!hasNameNs) { setOpenPromote(true); return; } // ← افتح مودال لو ناقصة
     try {
       setBusy("promote");
-      await bgPromote(name!, namespace!);
+      await apiPost("/apps/bluegreen/promote", { name, namespace });
       onChanged?.();
       alert("Promote done ✅");
-    } catch (e:any) {
-      alert("Promote failed: " + (e?.message || e));
-    } finally { setBusy(null); }
+    } catch (e: any) {
+      alert(`Promote failed: ${e?.message || e}`);
+    } finally {
+      setBusy(null);
+    }
   }
 
   async function doRollback() {
-    if (!hasNameNs) { setOpenRollback(true); return; } // ← افتح مودال لو ناقصة
     try {
       setBusy("rollback");
-      await bgRollback(name!, namespace!);
+      await apiPost("/apps/bluegreen/rollback", { name, namespace });
       onChanged?.();
       alert("Rollback done ✅");
-    } catch (e:any) {
-      alert("Rollback failed: " + (e?.message || e));
-    } finally { setBusy(null); }
+    } catch (e: any) {
+      alert(`Rollback failed: ${e?.message || e}`);
+    } finally {
+      setBusy(null);
+    }
   }
+
+  // استخراج repo/tag بشكل بسيط من image القادمة من الجدول
+  function parseImage(img?: string) {
+    if (!img) return { repo: "", tag: "" };
+    const idx = img.lastIndexOf(":");
+    if (idx === -1) return { repo: img, tag: "" };
+    return { repo: img.slice(0, idx), tag: img.slice(idx + 1) };
+  }
+  const { repo, tag } = parseImage(image);
 
   return (
     <div className="flex items-center gap-2">
-      <button className="btn btn-sm" onClick={() => setOpenPrepare(true)}>Prepare</button>
-      <button className="btn btn-sm" onClick={doPromote} disabled={busy!==null}>
-        {busy==="promote" ? "…" : "Promote"}
+      {/* Prepare */}
+      <button
+        className="btn btn-sm"
+        onClick={() => setOpenPrepare(true)}
+        title="Prepare a preview deployment"
+      >
+        Prepare
       </button>
-      <button className="btn btn-sm" onClick={doRollback} disabled={busy!==null}>
-        {busy==="rollback" ? "…" : "Rollback"}
+
+      {/* Promote */}
+      <button
+        className="btn btn-sm"
+        onClick={doPromote}
+        disabled={busy !== null}
+        title="Swap traffic to preview (zero-downtime)"
+      >
+        {busy === "promote" ? "…" : "Promote"}
+      </button>
+
+      {/* Rollback */}
+      <button
+        className="btn btn-sm"
+        onClick={doRollback}
+        disabled={busy !== null}
+        title="Instantly switch back to previous version"
+      >
+        {busy === "rollback" ? "…" : "Rollback"}
       </button>
 
       {openPrepare && (
         <PrepareModal
           onClose={() => setOpenPrepare(false)}
-          initial={{ name: name ?? "", namespace: namespace ?? "project-env", image: repo, tag, port: 80, health_path:"/", replicas:1 }}
-          afterSubmit={() => { setOpenPrepare(false); onChanged?.(); }}
-        />
-      )}
-
-      {openPromote && (
-        <PromoteModal
-          onClose={() => setOpenPromote(false)}
-          initial={{ name, namespace: namespace ?? "project-env" }}
-          afterSubmit={() => { setOpenPromote(false); onChanged?.(); }}
-        />
-      )}
-
-      {openRollback && (
-        <RollbackModal
-          onClose={() => setOpenRollback(false)}
-          initial={{ name, namespace: namespace ?? "project-env" }}
-          afterSubmit={() => { setOpenRollback(false); onChanged?.(); }}
+          initial={{
+            name,
+            namespace,
+            image: repo,
+            tag,
+            port: 80,
+            health_path: "/",
+            replicas: 1,
+          }}
+          afterSubmit={() => {
+            setOpenPrepare(false);
+            onChanged?.();
+          }}
         />
       )}
     </div>
