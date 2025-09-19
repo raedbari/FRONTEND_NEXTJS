@@ -4,7 +4,6 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
 
-// ===== أنواع البيانات القادمة من /apps/status =====
 type StatusItem = {
   name: string;
   image: string;
@@ -13,8 +12,7 @@ type StatusItem = {
   available: number;
   updated: number;
   conditions: Record<string, string>;
-  // حقول اختيارية نرسلها من الباكند (إن وُجدت)
-  svc_selector?: Record<string, string> | null;
+  svc_selector?: Record<string, string> | null; // { role: "active" | "preview" }
   preview_ready?: boolean | null;
 };
 
@@ -81,13 +79,29 @@ export default function AppsStatusPage() {
 
             <tbody>
               {items.map((it) => {
-                // الدور الحقيقي القادم من الـService selector
-                const rawRole = it.svc_selector?.role ?? "unknown";
-                // الدور المعروض: لو الصف نفسه لاسم ينتهي بـ -preview والخدمة على preview نعرضه Active
-                const displayRole =
-                  it.name.endsWith("-preview") && rawRole === "preview"
+                // استنتاج دور الـDeployment من الاسم (بدون تعديل الباكند حالياً)
+                const depRole = it.name.endsWith("-preview") ? "preview" : "active" as "preview" | "active";
+                const svcRole = (it.svc_selector?.role as "preview" | "active" | undefined) ?? undefined;
+                const isTraffic = svcRole !== undefined && svcRole === depRole;
+
+                // badge label + color
+                const label =
+                  svcRole === undefined
+                    ? "unknown"
+                    : isTraffic
                     ? "active"
-                    : rawRole;
+                    : depRole === "preview"
+                    ? "preview"
+                    : "idle";
+
+                const cls =
+                  svcRole === undefined
+                    ? "bg-zinc-600/30 text-zinc-300"
+                    : isTraffic
+                    ? "bg-emerald-600/30 text-emerald-300" // الترافيك هنا
+                    : depRole === "preview"
+                    ? "bg-sky-600/30 text-sky-300"         // نسخة المعاينة لكن مش عليها ترافيك
+                    : "bg-zinc-600/30 text-zinc-300";      // الأساسية لكن Idle
 
                 return (
                   <tr key={it.name} style={{ borderTop: "1px solid rgba(255,255,255,.06)" }}>
@@ -105,41 +119,19 @@ export default function AppsStatusPage() {
 
                     {/* Conditions */}
                     <td style={{ padding: 8 }}>
-                      {(Object.entries(it.conditions || {})).map(([k, v]) => (
+                      {Object.entries(it.conditions || {}).map(([k, v]) => (
                         <span key={k} className="badge" style={{ marginRight: 6 }}>
                           {k}:{v}
                         </span>
                       ))}
                     </td>
 
-                  // Traffic badge
-<td style={{ padding: 8 }}>
-  {(() => {
-    // 1) دور الديبلويمنت حسب الاسم (بدون تعديل الباكند)
-    const depRole = it.name.endsWith("-preview") ? "preview" : "active" as
-      | "preview"
-      | "active";
-
-    // 2) هل هذا الصف هو الذي عليه الترافيك فعلاً؟
-    const isTraffic = it.svc_selector?.role === depRole;
-
-    // 3) النص واللون حسب الحالة
-    const label = isTraffic ? "active" : depRole === "preview" ? "preview" : "idle";
-    const cls =
-      isTraffic
-        ? "bg-emerald-600/30 text-emerald-300" // يستقبل الترافيك
-        : depRole === "preview"
-        ? "bg-sky-600/30 text-sky-300"         // نسخة المعاينة
-        : "bg-zinc-600/30 text-zinc-300";      // الأساسية لكن ليست على الترافيك
-
-    return (
-      <span className={`px-2 py-1 rounded text-xs ${cls}`} title="traffic status">
-        {label}
-      </span>
-    );
-  })()}
-</td>
-
+                    {/* Traffic badge */}
+                    <td style={{ padding: 8 }}>
+                      <span className={`px-2 py-1 rounded text-xs ${cls}`} title="traffic status">
+                        {label}
+                      </span>
+                    </td>
 
                     {/* Scale controls */}
                     <td style={{ padding: 8 }}>
