@@ -112,21 +112,34 @@ export default function AppsStatusPage() {
                       ))}
                     </td>
 
-                    {/* Traffic badge (svc selector role) */}
-                    <td style={{ padding: 8 }}>
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          displayRole === "active"
-                            ? "bg-emerald-600/30 text-emerald-300"
-                            : displayRole === "preview"
-                            ? "bg-sky-600/30 text-sky-300"
-                            : "bg-zinc-600/30 text-zinc-300"
-                        }`}
-                        title="Service selector role (effective)"
-                      >
-                        svc role: {displayRole}
-                      </span>
-                    </td>
+                  // Traffic badge
+<td style={{ padding: 8 }}>
+  {(() => {
+    // 1) دور الديبلويمنت حسب الاسم (بدون تعديل الباكند)
+    const depRole = it.name.endsWith("-preview") ? "preview" : "active" as
+      | "preview"
+      | "active";
+
+    // 2) هل هذا الصف هو الذي عليه الترافيك فعلاً؟
+    const isTraffic = it.svc_selector?.role === depRole;
+
+    // 3) النص واللون حسب الحالة
+    const label = isTraffic ? "active" : depRole === "preview" ? "preview" : "idle";
+    const cls =
+      isTraffic
+        ? "bg-emerald-600/30 text-emerald-300" // يستقبل الترافيك
+        : depRole === "preview"
+        ? "bg-sky-600/30 text-sky-300"         // نسخة المعاينة
+        : "bg-zinc-600/30 text-zinc-300";      // الأساسية لكن ليست على الترافيك
+
+    return (
+      <span className={`px-2 py-1 rounded text-xs ${cls}`} title="traffic status">
+        {label}
+      </span>
+    );
+  })()}
+</td>
+
 
                     {/* Scale controls */}
                     <td style={{ padding: 8 }}>
