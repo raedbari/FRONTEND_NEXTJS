@@ -4,12 +4,15 @@
 // يعمل في المتصفح؛ أثناء SSR/البناء نستخدم Fallback من متغير بيئة اختياري.
 function getApiBase(): string {
   if (typeof window !== "undefined") {
+    // يبني العنوان على أساس نفس الـhost اللي فتحت منه الموقع
     const { protocol, hostname } = window.location;
     return `${protocol}//${hostname}:30000`;
   }
+  // fallback وقت الـSSR أو الـbuild
   const fromEnv = process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "");
   return fromEnv ?? "http://127.0.0.1:30000";
 }
+
 
 export async function apiGet<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${getApiBase()}${path}`, {
