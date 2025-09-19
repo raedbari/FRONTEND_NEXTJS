@@ -23,13 +23,13 @@ export default function Home() {
         <p style={{ color: "var(--muted)" }}>
           Continuous Integration → Containerization → Orchestrated Delivery → Observability → Monitoring → Resilience Testing
         </p>
-{/* 
-        {/* الشارات }
+{
+        {/* الشارات */}
         <div className="badges" style={{ marginTop: 16 }}>
           {["Terraform","Docker","Kubernetes","GitHub Actions","Prometheus","Grafana","Loki","Ansible","Chaos Mesh"].map((t) => (
             <Badge key={t}>{t}</Badge>
           ))}
-        </div> }*/
+        </div> }
 
         {/* فوتر بسيط */}
         <p style={{ color: "var(--muted)", marginTop: 14, fontSize: 13 }}>
