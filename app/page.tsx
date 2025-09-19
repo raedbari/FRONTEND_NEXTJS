@@ -15,7 +15,8 @@ export default function Home() {
 
         {/* العنوان المتدرّج */}
         <h1 style={{ fontSize: 42, lineHeight: 1.15, margin: "10px 0 6px" }}>
-          Welcome to our <span className="heading-gradient">Smart DevOps</span><br />
+          Welcome to our <span className="heading-gradient">Smart DevOps</span>
+          <br />
           <span className="heading-gradient">Deployment project</span>
         </h1>
 
@@ -23,13 +24,23 @@ export default function Home() {
         <p style={{ color: "var(--muted)" }}>
           Continuous Integration → Containerization → Orchestrated Delivery → Observability → Monitoring → Resilience Testing
         </p>
-{
+
         {/* الشارات */}
         <div className="badges" style={{ marginTop: 16 }}>
-          {["Terraform","Docker","Kubernetes","GitHub Actions","Prometheus","Grafana","Loki","Ansible","Chaos Mesh"].map((t) => (
+          {[
+            "Terraform",
+            "Docker",
+            "Kubernetes",
+            "GitHub Actions",
+            "Prometheus",
+            "Grafana",
+            "Loki",
+            "Ansible",
+          //  "Chaos Mesh",
+          ].map((t) => (
             <Badge key={t}>{t}</Badge>
           ))}
-        </div> }
+        </div>
 
         {/* فوتر بسيط */}
         <p style={{ color: "var(--muted)", marginTop: 14, fontSize: 13 }}>
