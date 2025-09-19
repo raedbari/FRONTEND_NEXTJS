@@ -1,6 +1,6 @@
 // lib/api.ts
 
-// يبني عنوان الـAPI من نفس المضيف الحالي (DuckDNS أو الـIP) وعلى المنفذ 30000
+// يبني عنوان الـAPI من نفس المضيف الحالي (DuckDNS أو الـIP) وعلى المنفذ 30000.
 // يعمل في المتصفح؛ أثناء SSR/البناء نستخدم Fallback من متغير بيئة اختياري.
 function getApiBase(): string {
   if (typeof window !== "undefined") {
