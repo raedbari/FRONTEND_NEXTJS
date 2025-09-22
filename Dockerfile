@@ -5,7 +5,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 # <-- ↓↓↓ هنا نعرّف ونمرّر المتغيّر وقت البناء ↓↓↓ -->
 ARG NEXT_PUBLIC_API_BASE=/api
-ENV NEXT_PUBLIC_API_BASE=$NEXT_PUBLIC_API_BASE
+ENV NEXT_PUBLIC_API_BASE=${NEXT_PUBLIC_API_BASE}
 # ---------------------------------------------------
 
 COPY package*.json ./
@@ -30,3 +30,5 @@ COPY --from=builder /app/.next/static ./.next/static
 
 EXPOSE 3000
 CMD ["node", "server.js"]
+-----------------------
+
