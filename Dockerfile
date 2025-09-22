@@ -3,12 +3,16 @@ FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# <-- ↓↓↓ هنا نعرّف ونمرّر المتغيّر وقت البناء ↓↓↓ -->
+ARG NEXT_PUBLIC_API_BASE=/api
+ENV NEXT_PUBLIC_API_BASE=$NEXT_PUBLIC_API_BASE
+# ---------------------------------------------------
+
 COPY package*.json ./
 RUN npm ci
 
 COPY . .
-# مع تعطيل optimizeCss لن نحتاج lightningcss نهائياً
-RUN npm run build
+RUN npm run build   # Next.js سيُضمّن القيمة داخل الباندل هنا
 
 # ===== Runtime (standalone) =====
 FROM node:20-bookworm-slim AS runner
@@ -17,6 +21,8 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV NEXT_TELEMETRY_DISABLED=1
+# (اختياري) للإطلاع فقط
+ENV NEXT_PUBLIC_API_BASE=${NEXT_PUBLIC_API_BASE}
 
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/public ./public
