@@ -3,16 +3,17 @@ FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# <-- ↓↓↓ هنا نعرّف ونمرّر المتغيّر وقت البناء ↓↓↓ -->
+# استلام وتمرير المتغيّرات وقت البناء
 ARG NEXT_PUBLIC_API_BASE=/api
-ENV NEXT_PUBLIC_API_BASE=${NEXT_PUBLIC_API_BASE}
-# ---------------------------------------------------
+ARG SSR_API_BASE
+ENV NEXT_PUBLIC_API_BASE=$NEXT_PUBLIC_API_BASE
+ENV SSR_API_BASE=$SSR_API_BASE
 
 COPY package*.json ./
 RUN npm ci
 
 COPY . .
-RUN npm run build   # Next.js سيُضمّن القيمة داخل الباندل هنا
+RUN npm run build   # Next.js سيضمّن القيم داخل الباندل هنا
 
 # ===== Runtime (standalone) =====
 FROM node:20-bookworm-slim AS runner
@@ -21,8 +22,6 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV NEXT_TELEMETRY_DISABLED=1
-# (اختياري) للإطلاع فقط
-ENV NEXT_PUBLIC_API_BASE=${NEXT_PUBLIC_API_BASE}
 
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/public ./public
