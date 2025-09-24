@@ -1,8 +1,11 @@
+'use client';
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const fetchCache = 'force-no-store';
+
 // إذا كانت الصفحة تشتغل على المتصفح فقط:
-'use client';
+
 import { useState } from 'react';
 import { login } from '@/lib/auth';
 import { useRouter, useSearchParams } from 'next/navigation';
