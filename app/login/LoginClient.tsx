@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 
 export default function LoginClient() {
   const params = useSearchParams();
-  const [email, setEmail] = useState('admin@example.com');
+  const [username, setUsername] = useState('');   // <-- بدل email
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -18,10 +18,10 @@ export default function LoginClient() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),   // <-- هنا username بدل email
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      // نجاح: وجّه أو اعرض رسالة…
+      // نجاح: إعادة التوجيه
       // window.location.href = params.get('next') ?? '/';
     } catch (e: any) {
       setErr(e.message ?? 'Login failed');
@@ -34,11 +34,11 @@ export default function LoginClient() {
     <div style={{maxWidth: 360, margin: '64px auto', fontFamily: 'sans-serif'}}>
       <h1>Login</h1>
       <form onSubmit={onSubmit}>
-        <label>Email</label>
+        <label>Username</label>
         <input
-          type="email"
-          value={email}
-          onChange={e=>setEmail(e.target.value)}
+          type="text"                   // <-- text مش email
+          value={username}
+          onChange={e => setUsername(e.target.value)}
           required
           style={{display:'block', width:'100%', margin:'8px 0'}}
         />
@@ -46,7 +46,7 @@ export default function LoginClient() {
         <input
           type="password"
           value={password}
-          onChange={e=>setPassword(e.target.value)}
+          onChange={e => setPassword(e.target.value)}
           required
           style={{display:'block', width:'100%', margin:'8px 0'}}
         />
