@@ -1,11 +1,11 @@
 
 
-export const dynamic = 'force-dynamic';
+// export const dynamic = 'force-dynamic';
 
-export const revalidate = 0;
+// export const revalidate = 0;
 
-import LoginClient from './LoginClient';
+// import LoginClient from './LoginClient';
 
-export default function Page() {
-  return <LoginClient />;
-}
+// export default function Page() {
+//   return <LoginClient />;
+// }
