@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { apiGet, apiPost } from "@/lib/api";
 
 type StatusItem = {
-  namespace: string;                 // مضاف
+  namespace?: string; // قد لا يعود من الـAPI دائماً
   name: string;
   image: string;
   desired: number;
@@ -84,6 +84,8 @@ export default function AppsStatusPage() {
 
             <tbody>
               {items.map((it) => {
+                const ns = it.namespace ?? "default";
+
                 // استنتاج دور الـDeployment من الاسم
                 const depRole = (it.name.endsWith("-preview") ? "preview" : "active") as
                   | "preview"
@@ -110,8 +112,8 @@ export default function AppsStatusPage() {
                     : "bg-zinc-600/30 text-zinc-300";
 
                 return (
-                  <tr key={`${it.namespace}/${it.name}`} style={{ borderTop: "1px solid rgba(255,255,255,.06)" }}>
-                    <td style={{ padding: 8 }}>{it.namespace}</td>
+                  <tr key={`${ns}/${it.name}`} style={{ borderTop: "1px solid rgba(255,255,255,.06)" }}>
+                    <td style={{ padding: 8 }}>{ns}</td>
 
                     {/* Name */}
                     <td style={{ padding: 8, fontWeight: 700 }}>{it.name}</td>
@@ -167,7 +169,7 @@ export default function AppsStatusPage() {
                     <td style={{ padding: 8 }}>
                       <button
                         className="px-2 py-1 text-sm rounded bg-blue-600"
-                        onClick={() => router.push(`/monitor/${it.namespace}/${it.name}`)}
+                        onClick={() => router.push(`/monitor/${ns}/${it.name}`)}
                         title="Monitor"
                       >
                         Monitor
