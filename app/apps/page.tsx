@@ -2,9 +2,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { apiGet, apiPost } from "@/lib/api";
 
 type StatusItem = {
+  namespace: string;                 // مضاف
   name: string;
   image: string;
   desired: number;
@@ -23,6 +25,7 @@ export default function AppsStatusPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [scaling, setScaling] = useState<Record<string, number>>({});
+  const router = useRouter();
 
   async function load() {
     try {
@@ -65,6 +68,7 @@ export default function AppsStatusPage() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ textAlign: "left", color: "var(--muted)" }}>
+                <th style={{ padding: 8 }}>Namespace</th>
                 <th style={{ padding: 8 }}>Name</th>
                 <th style={{ padding: 8 }}>Image</th>
                 <th style={{ padding: 8 }}>Desired</th>
@@ -74,17 +78,19 @@ export default function AppsStatusPage() {
                 <th style={{ padding: 8 }}>Conditions</th>
                 <th style={{ padding: 8 }}>Traffic</th>
                 <th style={{ padding: 8 }}>Scale</th>
+                <th style={{ padding: 8 }}>Actions</th>
               </tr>
             </thead>
 
             <tbody>
               {items.map((it) => {
-                // استنتاج دور الـDeployment من الاسم (بدون تعديل الباكند حالياً)
-                const depRole = it.name.endsWith("-preview") ? "preview" : "active" as "preview" | "active";
+                // استنتاج دور الـDeployment من الاسم
+                const depRole = (it.name.endsWith("-preview") ? "preview" : "active") as
+                  | "preview"
+                  | "active";
                 const svcRole = (it.svc_selector?.role as "preview" | "active" | undefined) ?? undefined;
                 const isTraffic = svcRole !== undefined && svcRole === depRole;
 
-                // badge label + color
                 const label =
                   svcRole === undefined
                     ? "unknown"
@@ -98,13 +104,15 @@ export default function AppsStatusPage() {
                   svcRole === undefined
                     ? "bg-zinc-600/30 text-zinc-300"
                     : isTraffic
-                    ? "bg-emerald-600/30 text-emerald-300" // الترافيك هنا
+                    ? "bg-emerald-600/30 text-emerald-300"
                     : depRole === "preview"
-                    ? "bg-sky-600/30 text-sky-300"         // نسخة المعاينة لكن مش عليها ترافيك
-                    : "bg-zinc-600/30 text-zinc-300";      // الأساسية لكن Idle
+                    ? "bg-sky-600/30 text-sky-300"
+                    : "bg-zinc-600/30 text-zinc-300";
 
                 return (
-                  <tr key={it.name} style={{ borderTop: "1px solid rgba(255,255,255,.06)" }}>
+                  <tr key={`${it.namespace}/${it.name}`} style={{ borderTop: "1px solid rgba(255,255,255,.06)" }}>
+                    <td style={{ padding: 8 }}>{it.namespace}</td>
+
                     {/* Name */}
                     <td style={{ padding: 8, fontWeight: 700 }}>{it.name}</td>
 
@@ -154,13 +162,24 @@ export default function AppsStatusPage() {
                         </button>
                       </div>
                     </td>
+
+                    {/* Actions */}
+                    <td style={{ padding: 8 }}>
+                      <button
+                        className="px-2 py-1 text-sm rounded bg-blue-600"
+                        onClick={() => router.push(`/monitor/${it.namespace}/${it.name}`)}
+                        title="Monitor"
+                      >
+                        Monitor
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
 
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={9} style={{ padding: 12, color: "var(--muted)" }}>
+                  <td colSpan={11} style={{ padding: 12, color: "var(--muted)" }}>
                     No apps yet. Go to <a href="/apps/new">Deploy App</a>.
                   </td>
                 </tr>
