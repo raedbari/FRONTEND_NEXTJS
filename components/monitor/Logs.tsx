@@ -1,19 +1,91 @@
+// components/monitor/Logs.tsx
 "use client";
-import { useEffect, useState } from "react";
-import { getLogs } from "@/lib/monitorClient";
 
-export default function Logs({ ns, app }:{ns:string;app:string}){
-  const [q,setQ]=useState(""); const [items,setItems]=useState<any[]>([]);
-  const pull=async()=>{ try{ const r=await getLogs(ns,app,q); setItems(r.items.slice(-500)); }catch{} };
-  useEffect(()=>{ pull(); const id=setInterval(pull,15_000); return ()=>clearInterval(id); },[ns,app,q]);
+import { useEffect, useState } from "react";
+import { apiGet } from "@/lib/api";
+
+type Props = { ns: string; app: string };
+
+type LogItem = {
+  ts: string;           // نانو ثانية من لوكي
+  line: string;
+  labels?: Record<string, string>;
+};
+
+export default function Logs({ ns, app }: Props) {
+  const [q, setQ] = useState("");
+  const [logs, setLogs] = useState<LogItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function searchLogs(query: string) {
+    setLoading(true);
+    setErr(null);
+    try {
+      const url = `/monitor/logs?ns=${encodeURIComponent(ns)}&app=${encodeURIComponent(
+        app
+      )}&limit=200${query ? `&q=${encodeURIComponent(query)}` : ""}`;
+      const res = await apiGet<{ items: LogItem[] }>(url);
+      setLogs(res.items ?? []);
+    } catch (e: any) {
+      setErr(e?.message || "logs error");
+      setLogs([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // تحميل مبدئي بدون فلتر
+  useEffect(() => {
+    searchLogs("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ns, app]);
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    searchLogs(q);
+  }
+
   return (
-    <div className="rounded-2xl shadow p-4">
-      <div className="flex gap-2 mb-2">
-        <input className="w-full bg-neutral-900 rounded p-2 text-sm" placeholder='search e.g. "ERROR"' value={q} onChange={e=>setQ(e.target.value)} />
-        <button className="px-3 py-2 rounded bg-blue-600 text-sm" onClick={pull}>Search</button>
-      </div>
-      <div className="h-64 overflow-auto text-xs font-mono leading-5">
-        {items.map((x,i)=>(<div key={i}><span className="opacity-60">{new Date(Number((x.ts+"").slice(0,13))).toISOString()} </span>{x.line}</div>))}
+    <div className="glass p-4 space-y-3">
+      <div className="text-sm font-semibold">HTTP p95 ms / 5xx r/s</div>
+
+      <form onSubmit={onSubmit} className="flex gap-2">
+        <input
+          className="input flex-1"
+          placeholder='search e.g. "ERROR"'
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <button className="btn btn-primary" type="submit" disabled={loading}>
+          {loading ? "…" : "Search"}
+        </button>
+      </form>
+
+      {err && <div className="text-red-400 text-sm">{err}</div>}
+
+      <div
+        className="rounded bg-black/30 p-2 text-xs font-mono leading-5"
+        style={{ maxHeight: 320, overflow: "auto", whiteSpace: "pre-wrap" }}
+      >
+        {logs.length === 0 && !loading ? (
+          <div className="text-zinc-400">no logs</div>
+        ) : (
+          logs.map((it, i) => {
+            // تحويل نانو ثانية إلى ISO
+            let t = "";
+            try {
+              const ms = Number(it.ts) / 1e6;
+              t = new Date(ms).toISOString();
+            } catch {}
+            return (
+              <div key={i}>
+                <span className="text-zinc-400 mr-2">{t}</span>
+                <span>{it.line}</span>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );
