@@ -5,7 +5,11 @@ import "./globals.css";
 export const metadata = {
   title: "Smart DevOps Deployment",
   description: "Cloud-Native DevOps Platform UI",
+   icons: {
+    icon: "/cloud.jpg",   
+  },
 };
+
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
