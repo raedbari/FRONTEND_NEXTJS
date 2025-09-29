@@ -3,7 +3,7 @@ FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# استلام وتمرير المتغيّرات وقت البناء
+# استلام وتمرير المتغيّرات وقت 
 ARG NEXT_PUBLIC_API_BASE=/api
 ARG SSR_API_BASE
 ENV NEXT_PUBLIC_API_BASE=$NEXT_PUBLIC_API_BASE
