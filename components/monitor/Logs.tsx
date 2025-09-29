@@ -2,12 +2,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiGet } from "@/lib/api";
+import { getLogs } from "@/lib/monitorClient"; // ✅ استخدم العميل الموحّد بدل المسارات المباشرة
 
 type Props = { ns: string; app: string };
 
 type LogItem = {
-  ts: string;           // نانو ثانية من لوكي
+  ts: string;            // نانو ثانية من لوكي
   line: string;
   labels?: Record<string, string>;
 };
@@ -22,11 +22,9 @@ export default function Logs({ ns, app }: Props) {
     setLoading(true);
     setErr(null);
     try {
-      const url = `/monitor/logs?ns=${encodeURIComponent(ns)}&app=${encodeURIComponent(
-        app
-      )}&limit=200${query ? `&q=${encodeURIComponent(query)}` : ""}`;
-      const res = await apiGet<{ items: LogItem[] }>(url);
-      setLogs(res.items ?? []);
+      // ✅ نداء عبر monitorClient: يضمن إضافة /api واستخدام القيم البيئية بشكل صحيح
+      const data = await getLogs(ns, app, query ?? "", 900, 200); // since=15m, limit=200
+      setLogs((data?.items as LogItem[]) ?? []);
     } catch (e: any) {
       setErr(e?.message || "logs error");
       setLogs([]);
