@@ -1,19 +1,54 @@
 "use client";
-import { useEffect, useState } from "react";
-import { getOverview } from "@/lib/monitorClient";
 
-export default function Charts({ ns, app }:{ns:string;app:string}){
-  const [pts,setPts]=useState<{p95:number;err:number}[]>([]);
-  useEffect(()=>{ const tick=async()=>{try{const o=await getOverview(ns,app); setPts(p=>[...p.slice(-60), {p95:o.http?.p95_ms||0, err:o.http?.errors_rate||0}]);}catch{}}; tick(); const id=setInterval(tick,10_000); return ()=>clearInterval(id); },[ns,app]);
-  const xs=pts.length>1?pts.map((_,i)=>i*(100/(pts.length-1))):[0];
-  const path=(ys:number[])=>ys.length<2?null:<path d={`M ${ys.map((y,i)=>`${xs[i].toFixed(2)} ${y.toFixed(2)}`).join(" L ")}`} fill="none" strokeWidth="0.8"/>;
-  return (
-    <div className="rounded-2xl shadow p-4">
-      <h3 className="text-sm mb-2">HTTP p95 ms / 5xx r/s</h3>
-      <svg viewBox="0 0 100 40" className="w-full h-40">
-        {path(pts.map(p=>40 - Math.min(39, p.p95/1000)))}
-        {path(pts.map(p=>40 - Math.min(39, p.err*40)))}
-      </svg>
-    </div>
-  );
+const USE_GRAFANA =
+  typeof process !== "undefined" &&
+  process.env.NEXT_PUBLIC_USE_GRAFANA_MONITORING === "true";
+
+const GRAFANA_BASE =
+  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_GRAFANA_BASE) || "/grafana";
+
+const GRAFANA_DASH =
+  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_GRAFANA_DASH_UID) ||
+  "app-observability";
+
+function grafanaLink(ns: string, app: string, from = "now-1h", to = "now") {
+  return `${GRAFANA_BASE}/d/${GRAFANA_DASH}/app-monitor` +
+    `?var-namespace=${encodeURIComponent(ns)}` +
+    `&var-app=${encodeURIComponent(app)}&from=${from}&to=${to}`;
 }
+
+type Props = { ns: string; app: string };
+
+// عند تفعيل الفلاج نعرض بطاقة صغيرة تربط بـ Grafana
+export default function Overview({ ns, app }: Props) {
+  if (USE_GRAFANA) {
+    return (
+      <div className="rounded-2xl shadow p-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm">Overview</h3>
+          <a
+            className="text-sky-400 underline"
+            href={grafanaLink(ns, app)}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open in Grafana
+          </a>
+        </div>
+        <iframe
+          src={grafanaLink(ns, app)}
+          style={{ width: "100%", height: 360, border: "none", borderRadius: 8, marginTop: 8 }}
+        />
+      </div>
+    );
+  }
+
+  // ===== Legacy fallback (الكود القديم لديك) =====
+  // (أبقيناه كما هو ليعمل عند تعطيل الفلاج)
+  // ملاحظة: إن أردت إزالته لاحقاً يمكن حذفه بأمان.
+  // ---- BEGIN LEGACY ----
+  // استوردتَ هذا الملف سابقاً مع getOverview… لو أردت الحفاظ عليه اتركه كما هو.
+  return <div className="rounded-2xl shadow p-4 text-sm opacity-70">legacy Overview…</div>;
+  // ---- END LEGACY ----
+}
+

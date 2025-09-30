@@ -3,11 +3,28 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-// نستخدم عميل المراقبة الموحّد بدل /apps/status غير الموجود
 import { listApps } from "@/lib/monitorClient";
-// (اختياري) لو عندك API فعّال للـscale، أبقِه:
 import { apiPost } from "@/lib/api";
 
+// ===== Grafana Integration (feature flag) =====
+const USE_GRAFANA =
+  typeof process !== "undefined" &&
+  process.env.NEXT_PUBLIC_USE_GRAFANA_MONITORING === "true";
+
+const GRAFANA_BASE =
+  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_GRAFANA_BASE) || "/grafana";
+
+const GRAFANA_DASH =
+  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_GRAFANA_DASH_UID) ||
+  "app-observability";
+
+const grafanaLink = (ns: string, app: string, from = "now-1h", to = "now") =>
+  `${GRAFANA_BASE}/d/${GRAFANA_DASH}/app-monitor` +
+  `?var-namespace=${encodeURIComponent(ns)}` +
+  `&var-app=${encodeURIComponent(app)}` +
+  `&from=${from}&to=${to}`;
+
+// ===== Types =====
 type StatusItem = {
   namespace?: string;
   name: string;
@@ -33,10 +50,10 @@ export default function AppsStatusPage() {
       setErr(null);
       setLoading(true);
 
-      // يضرب: /api/monitor/apps
+      // يضرب: /api/monitor/apps (backend: FastAPI /monitor/apps)
       const data = await listApps();
 
-      // mapping بسيط ليتوافق مع الأعمدة الحالية
+      // تطبيع البيانات إلى نموذج الجدول الحالي
       const mapped: StatusItem[] = (data as any[]).map((x) => ({
         namespace: x.namespace,
         name: x.app,
@@ -60,8 +77,7 @@ export default function AppsStatusPage() {
 
   async function doScale(name: string, replicas: number) {
     try {
-      // هذا يفترض وجود /apps/scale في الـAPI.
-      // لو غير موجود، عطّل الزر أو غيّر المسار لاحقًا.
+      // اختياري: لو عندك API للـscale فعلاً؛ خلاف ذلك عطّل الزر أو عدّل المسار لاحقًا
       await apiPost("/apps/scale", { name, replicas });
       await load();
     } catch (e: any) {
@@ -106,20 +122,29 @@ export default function AppsStatusPage() {
               {items.map((it) => {
                 const ns = it.namespace ?? "default";
 
-                const depRole = (it.name.endsWith("-preview") ? "preview" : "active") as "preview" | "active";
+                const depRole = (it.name.endsWith("-preview") ? "preview" : "active") as
+                  | "preview"
+                  | "active";
                 const svcRole = (it.svc_selector?.role as "preview" | "active" | undefined) ?? undefined;
                 const isTraffic = svcRole !== undefined && svcRole === depRole;
 
                 const label =
-                  svcRole === undefined ? "unknown" :
-                  isTraffic ? "active" :
-                  depRole === "preview" ? "preview" : "idle";
+                  svcRole === undefined
+                    ? "unknown"
+                    : isTraffic
+                    ? "active"
+                    : depRole === "preview"
+                    ? "preview"
+                    : "idle";
 
                 const cls =
-                  svcRole === undefined ? "bg-zinc-600/30 text-zinc-300" :
-                  isTraffic ? "bg-emerald-600/30 text-emerald-300" :
-                  depRole === "preview" ? "bg-sky-600/30 text-sky-300" :
-                  "bg-zinc-600/30 text-zinc-300";
+                  svcRole === undefined
+                    ? "bg-zinc-600/30 text-zinc-300"
+                    : isTraffic
+                    ? "bg-emerald-600/30 text-emerald-300"
+                    : depRole === "preview"
+                    ? "bg-sky-600/30 text-sky-300"
+                    : "bg-zinc-600/30 text-zinc-300";
 
                 return (
                   <tr key={`${ns}/${it.name}`} style={{ borderTop: "1px solid rgba(255,255,255,.06)" }}>
@@ -167,13 +192,25 @@ export default function AppsStatusPage() {
                     </td>
 
                     <td style={{ padding: 8 }}>
-                      <button
-                        className="px-2 py-1 text-sm rounded bg-blue-600"
-                        onClick={() => router.push(`/monitor/${ns}/${it.name}`)}
-                        title="Monitor"
-                      >
-                        Monitor
-                      </button>
+                      {USE_GRAFANA ? (
+                        <a
+                          className="px-2 py-1 text-sm rounded bg-blue-600"
+                          href={grafanaLink(ns, it.name)}
+                          target="_blank"
+                          rel="noreferrer"
+                          title="Open in Grafana"
+                        >
+                          Monitor
+                        </a>
+                      ) : (
+                        <button
+                          className="px-2 py-1 text-sm rounded bg-blue-600"
+                          onClick={() => router.push(`/monitor/${ns}/${it.name}`)}
+                          title="Monitor"
+                        >
+                          Monitor
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
