@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiGet } from "@/lib/api";
+import { getLogs } from "@/lib/monitorClient";
 
 type Props = { ns: string; app: string };
 
@@ -22,11 +22,9 @@ export default function Logs({ ns, app }: Props) {
     setLoading(true);
     setErr(null);
     try {
-      const url = `/monitor/logs?ns=${encodeURIComponent(ns)}&app=${encodeURIComponent(
-        app
-      )}&limit=200${query ? `&q=${encodeURIComponent(query)}` : ""}`;
-      const res = await apiGet<{ items: LogItem[] }>(url);
-      setLogs(res.items ?? []);
+      const data = await getLogs(ns, app, query || "", 900, 200);
+      const items = Array.isArray((data as any)?.items) ? (data as any).items as LogItem[] : [];
+      setLogs(items);
     } catch (e: any) {
       setErr(e?.message || "logs error");
       setLogs([]);
@@ -62,13 +60,13 @@ export default function Logs({ ns, app }: Props) {
         </button>
       </form>
 
-      {err && <div className="text-red-400 text-sm">{err}</div>}
+      {err && <div className="text-red-400 text-sm">{String(err)}</div>}
 
       <div
         className="rounded bg-black/30 p-2 text-xs font-mono leading-5"
         style={{ maxHeight: 320, overflow: "auto", whiteSpace: "pre-wrap" }}
       >
-        {logs.length === 0 && !loading ? (
+        {(!logs || logs.length === 0) && !loading ? (
           <div className="text-zinc-400">no logs</div>
         ) : (
           logs.map((it, i) => {
