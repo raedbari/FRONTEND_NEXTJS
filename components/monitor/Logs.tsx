@@ -7,7 +7,7 @@ import { getLogs } from "@/lib/monitorClient";
 type Props = { ns: string; app: string };
 
 type LogItem = {
-  ts: string;           // نانو ثانية من لوكي
+  ts: string;
   line: string;
   labels?: Record<string, string>;
 };
@@ -23,7 +23,7 @@ export default function Logs({ ns, app }: Props) {
     setErr(null);
     try {
       const data = await getLogs(ns, app, query || "", 900, 200);
-      const items = Array.isArray((data as any)?.items) ? (data as any).items as LogItem[] : [];
+      const items = Array.isArray((data as any)?.items) ? ((data as any).items as LogItem[]) : [];
       setLogs(items);
     } catch (e: any) {
       setErr(e?.message || "logs error");
@@ -33,7 +33,6 @@ export default function Logs({ ns, app }: Props) {
     }
   }
 
-  // تحميل مبدئي بدون فلتر
   useEffect(() => {
     searchLogs("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,12 +69,8 @@ export default function Logs({ ns, app }: Props) {
           <div className="text-zinc-400">no logs</div>
         ) : (
           logs.map((it, i) => {
-            // تحويل نانو ثانية إلى ISO
             let t = "";
-            try {
-              const ms = Number(it.ts) / 1e6;
-              t = new Date(ms).toISOString();
-            } catch {}
+            try { t = new Date(Number(it.ts) / 1e6).toISOString(); } catch {}
             return (
               <div key={i}>
                 <span className="text-zinc-400 mr-2">{t}</span>

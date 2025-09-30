@@ -3,10 +3,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiGet, apiPost } from "@/lib/api";
+// نستخدم عميل المراقبة الموحّد بدل /apps/status غير الموجود
+import { listApps } from "@/lib/monitorClient";
+// (اختياري) لو عندك API فعّال للـscale، أبقِه:
+import { apiPost } from "@/lib/api";
 
 type StatusItem = {
-  namespace?: string; // قد لا يعود من الـAPI دائماً
+  namespace?: string;
   name: string;
   image: string;
   desired: number;
@@ -14,11 +17,9 @@ type StatusItem = {
   available: number;
   updated: number;
   conditions: Record<string, string>;
-  svc_selector?: Record<string, string> | null; // { role: "active" | "preview" }
+  svc_selector?: Record<string, string> | null;
   preview_ready?: boolean | null;
 };
-
-type StatusResponse = { items: StatusItem[] };
 
 export default function AppsStatusPage() {
   const [items, setItems] = useState<StatusItem[]>([]);
@@ -31,8 +32,25 @@ export default function AppsStatusPage() {
     try {
       setErr(null);
       setLoading(true);
-      const data = await apiGet<StatusResponse>("/apps/status");
-      setItems(data.items || []);
+
+      // يضرب: /api/monitor/apps
+      const data = await listApps();
+
+      // mapping بسيط ليتوافق مع الأعمدة الحالية
+      const mapped: StatusItem[] = (data as any[]).map((x) => ({
+        namespace: x.namespace,
+        name: x.app,
+        image: x.image,
+        desired: x.replicas_desired ?? 0,
+        current: x.replicas_desired ?? 0,
+        available: x.replicas_available ?? 0,
+        updated: x.replicas_available ?? 0,
+        conditions: {},
+        svc_selector: null,
+        preview_ready: null,
+      }));
+
+      setItems(mapped);
     } catch (e: any) {
       setErr(e?.message || "Failed to load status");
     } finally {
@@ -42,6 +60,8 @@ export default function AppsStatusPage() {
 
   async function doScale(name: string, replicas: number) {
     try {
+      // هذا يفترض وجود /apps/scale في الـAPI.
+      // لو غير موجود، عطّل الزر أو غيّر المسار لاحقًا.
       await apiPost("/apps/scale", { name, replicas });
       await load();
     } catch (e: any) {
@@ -86,48 +106,31 @@ export default function AppsStatusPage() {
               {items.map((it) => {
                 const ns = it.namespace ?? "default";
 
-                // استنتاج دور الـDeployment من الاسم
-                const depRole = (it.name.endsWith("-preview") ? "preview" : "active") as
-                  | "preview"
-                  | "active";
+                const depRole = (it.name.endsWith("-preview") ? "preview" : "active") as "preview" | "active";
                 const svcRole = (it.svc_selector?.role as "preview" | "active" | undefined) ?? undefined;
                 const isTraffic = svcRole !== undefined && svcRole === depRole;
 
                 const label =
-                  svcRole === undefined
-                    ? "unknown"
-                    : isTraffic
-                    ? "active"
-                    : depRole === "preview"
-                    ? "preview"
-                    : "idle";
+                  svcRole === undefined ? "unknown" :
+                  isTraffic ? "active" :
+                  depRole === "preview" ? "preview" : "idle";
 
                 const cls =
-                  svcRole === undefined
-                    ? "bg-zinc-600/30 text-zinc-300"
-                    : isTraffic
-                    ? "bg-emerald-600/30 text-emerald-300"
-                    : depRole === "preview"
-                    ? "bg-sky-600/30 text-sky-300"
-                    : "bg-zinc-600/30 text-zinc-300";
+                  svcRole === undefined ? "bg-zinc-600/30 text-zinc-300" :
+                  isTraffic ? "bg-emerald-600/30 text-emerald-300" :
+                  depRole === "preview" ? "bg-sky-600/30 text-sky-300" :
+                  "bg-zinc-600/30 text-zinc-300";
 
                 return (
                   <tr key={`${ns}/${it.name}`} style={{ borderTop: "1px solid rgba(255,255,255,.06)" }}>
                     <td style={{ padding: 8 }}>{ns}</td>
-
-                    {/* Name */}
                     <td style={{ padding: 8, fontWeight: 700 }}>{it.name}</td>
-
-                    {/* Image */}
                     <td style={{ padding: 8, fontFamily: "monospace" }}>{it.image}</td>
-
-                    {/* Numbers */}
                     <td style={{ padding: 8 }}>{it.desired}</td>
                     <td style={{ padding: 8 }}>{it.current}</td>
                     <td style={{ padding: 8 }}>{it.available}</td>
                     <td style={{ padding: 8 }}>{it.updated}</td>
 
-                    {/* Conditions */}
                     <td style={{ padding: 8 }}>
                       {Object.entries(it.conditions || {}).map(([k, v]) => (
                         <span key={k} className="badge" style={{ marginRight: 6 }}>
@@ -136,14 +139,12 @@ export default function AppsStatusPage() {
                       ))}
                     </td>
 
-                    {/* Traffic badge */}
                     <td style={{ padding: 8 }}>
                       <span className={`px-2 py-1 rounded text-xs ${cls}`} title="traffic status">
                         {label}
                       </span>
                     </td>
 
-                    {/* Scale controls */}
                     <td style={{ padding: 8 }}>
                       <div style={{ display: "flex", gap: 6 }}>
                         <input
@@ -165,7 +166,6 @@ export default function AppsStatusPage() {
                       </div>
                     </td>
 
-                    {/* Actions */}
                     <td style={{ padding: 8 }}>
                       <button
                         className="px-2 py-1 text-sm rounded bg-blue-600"
