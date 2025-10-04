@@ -6,31 +6,20 @@ import { listApps } from "@/lib/monitorClient";
 import { apiPost } from "@/lib/api";
 import { grafanaDashboardUrl /*, grafanaExploreLokiUrl */ } from "@/lib/grafana";
 
-// type StatusItem = {
-//   namespace?: string;
-//   name: string;
-//   image: string;
-//   desired: number;
-//   current: number;
-//   available: number;
-//   updated: number;
-//   conditions: Record<string, string>;
-//   svc_selector?: Record<string, string> | null;
-//   preview_ready?: boolean | null;
-// };
-// const data = await listApps();
-const mapped: StatusItem[] = (data as any[]).map((x) => ({
-  namespace: x.namespace ?? undefined,      // إن كان مرجعك يضيف namespace
-  name: x.name,
-  image: x.image,
-  desired: x.desired,
-  current: x.current,
-  available: x.available,
-  updated: x.updated,
-  conditions: x.conditions ?? {},
-  svc_selector: x.svc_selector ?? null,
-  preview_ready: x.preview_ready ?? null,
-}));
+type StatusItem = {
+  namespace?: string;
+  name: string;
+  image: string;
+  desired: number;
+  current: number;
+  available: number;
+  updated: number;
+  conditions: Record<string, string>;
+  svc_selector?: Record<string, string> | null;
+  preview_ready?: boolean | null;
+};
+
+
 
 
 export default function AppsStatusPage() {
