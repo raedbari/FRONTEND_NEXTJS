@@ -2,58 +2,53 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { listApps } from "@/lib/monitorClient";
 import { apiPost } from "@/lib/api";
+import { grafanaDashboardUrl /*, grafanaExploreLokiUrl */ } from "@/lib/grafana";
 
-// ===== Grafana Integration (feature flag) =====
-const USE_GRAFANA =
-  typeof process !== "undefined" &&
-  process.env.NEXT_PUBLIC_USE_GRAFANA_MONITORING === "true";
+// type StatusItem = {
+//   namespace?: string;
+//   name: string;
+//   image: string;
+//   desired: number;
+//   current: number;
+//   available: number;
+//   updated: number;
+//   conditions: Record<string, string>;
+//   svc_selector?: Record<string, string> | null;
+//   preview_ready?: boolean | null;
+// };
+// const data = await listApps();
+const mapped: StatusItem[] = (data as any[]).map((x) => ({
+  namespace: x.namespace ?? undefined,      // إن كان مرجعك يضيف namespace
+  name: x.name,
+  image: x.image,
+  desired: x.desired,
+  current: x.current,
+  available: x.available,
+  updated: x.updated,
+  conditions: x.conditions ?? {},
+  svc_selector: x.svc_selector ?? null,
+  preview_ready: x.preview_ready ?? null,
+}));
 
-const GRAFANA_BASE =
-  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_GRAFANA_BASE) || "/grafana";
-
-const GRAFANA_DASH =
-  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_GRAFANA_DASH_UID) ||
-  "app-observability";
-
-const grafanaLink = (ns: string, app: string, from = "now-1h", to = "now") =>
-  `${GRAFANA_BASE}/d/${GRAFANA_DASH}/app-monitor` +
-  `?var-namespace=${encodeURIComponent(ns)}` +
-  `&var-app=${encodeURIComponent(app)}` +
-  `&from=${from}&to=${to}`;
-
-// ===== Types =====
-type StatusItem = {
-  namespace?: string;
-  name: string;
-  image: string;
-  desired: number;
-  current: number;
-  available: number;
-  updated: number;
-  conditions: Record<string, string>;
-  svc_selector?: Record<string, string> | null;
-  preview_ready?: boolean | null;
-};
 
 export default function AppsStatusPage() {
   const [items, setItems] = useState<StatusItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [scaling, setScaling] = useState<Record<string, number>>({});
-  const router = useRouter();
+  const [working, setWorking] = useState<string | null>(null); // لتعطيل الأزرار أثناء التنفيذ
 
   async function load() {
     try {
       setErr(null);
       setLoading(true);
 
-      // يضرب: /api/monitor/apps (backend: FastAPI /monitor/apps)
+      // /api/monitor/apps
       const data = await listApps();
 
-      // تطبيع البيانات إلى نموذج الجدول الحالي
+      // تحويل بسيط ليتوافق مع الأعمدة الحالية
       const mapped: StatusItem[] = (data as any[]).map((x) => ({
         namespace: x.namespace,
         name: x.app,
@@ -77,11 +72,13 @@ export default function AppsStatusPage() {
 
   async function doScale(name: string, replicas: number) {
     try {
-      // اختياري: لو عندك API للـscale فعلاً؛ خلاف ذلك عطّل الزر أو عدّل المسار لاحقًا
+      setWorking(name);
       await apiPost("/apps/scale", { name, replicas });
       await load();
     } catch (e: any) {
       alert(e?.message || "Scale failed");
+    } finally {
+      setWorking(null);
     }
   }
 
@@ -93,7 +90,9 @@ export default function AppsStatusPage() {
     <section className="glass" style={{ padding: 20, maxWidth: 1200, margin: "0 auto" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2 className="heading-gradient" style={{ fontSize: 28 }}>Apps Status</h2>
-        <button className="btn btn-ghost" onClick={load}>Refresh</button>
+        <button className="btn btn-ghost" onClick={load} disabled={loading}>
+          {loading ? "…" : "Refresh"}
+        </button>
       </div>
 
       {loading && <p>Loading…</p>}
@@ -111,106 +110,78 @@ export default function AppsStatusPage() {
                 <th style={{ padding: 8 }}>Current</th>
                 <th style={{ padding: 8 }}>Available</th>
                 <th style={{ padding: 8 }}>Updated</th>
-                <th style={{ padding: 8 }}>Conditions</th>
-                <th style={{ padding: 8 }}>Traffic</th>
-                <th style={{ padding: 8 }}>Scale</th>
-                <th style={{ padding: 8 }}>Actions</th>
+                <th style={{ padding: 8, minWidth: 360 }}>Actions</th>
               </tr>
             </thead>
 
             <tbody>
               {items.map((it) => {
                 const ns = it.namespace ?? "default";
-
-                const depRole = (it.name.endsWith("-preview") ? "preview" : "active") as
-                  | "preview"
-                  | "active";
-                const svcRole = (it.svc_selector?.role as "preview" | "active" | undefined) ?? undefined;
-                const isTraffic = svcRole !== undefined && svcRole === depRole;
-
-                const label =
-                  svcRole === undefined
-                    ? "unknown"
-                    : isTraffic
-                    ? "active"
-                    : depRole === "preview"
-                    ? "preview"
-                    : "idle";
-
-                const cls =
-                  svcRole === undefined
-                    ? "bg-zinc-600/30 text-zinc-300"
-                    : isTraffic
-                    ? "bg-emerald-600/30 text-emerald-300"
-                    : depRole === "preview"
-                    ? "bg-sky-600/30 text-sky-300"
-                    : "bg-zinc-600/30 text-zinc-300";
+                const rowKey = `${ns}/${it.name}`;
+                const isBusy = working === it.name;
 
                 return (
-                  <tr key={`${ns}/${it.name}`} style={{ borderTop: "1px solid rgba(255,255,255,.06)" }}>
+                  <tr key={rowKey} style={{ borderTop: "1px solid rgba(255,255,255,.06)" }}>
                     <td style={{ padding: 8 }}>{ns}</td>
                     <td style={{ padding: 8, fontWeight: 700 }}>{it.name}</td>
-                    <td style={{ padding: 8, fontFamily: "monospace" }}>{it.image}</td>
+                    <td style={{ padding: 8, fontFamily: "monospace", maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {it.image}
+                    </td>
                     <td style={{ padding: 8 }}>{it.desired}</td>
                     <td style={{ padding: 8 }}>{it.current}</td>
                     <td style={{ padding: 8 }}>{it.available}</td>
                     <td style={{ padding: 8 }}>{it.updated}</td>
 
                     <td style={{ padding: 8 }}>
-                      {Object.entries(it.conditions || {}).map(([k, v]) => (
-                        <span key={k} className="badge" style={{ marginRight: 6 }}>
-                          {k}:{v}
-                        </span>
-                      ))}
-                    </td>
+                      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                        {/* Scale block */}
+                        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                          <input
+                            className="input"
+                            type="number"
+                            min={0}
+                            defaultValue={it.desired}
+                            onChange={(e) =>
+                              setScaling((s) => ({ ...s, [it.name]: Number(e.target.value) }))
+                            }
+                            style={{ width: 100 }}
+                            disabled={isBusy}
+                          />
+                          <button
+                            className="btn btn-primary"
+                            onClick={() => doScale(it.name, scaling[it.name] ?? it.desired)}
+                            disabled={isBusy}
+                            title="Scale"
+                          >
+                            {isBusy ? "Working…" : "Scale"}
+                          </button>
+                        </div>
 
-                    <td style={{ padding: 8 }}>
-                      <span className={`px-2 py-1 rounded text-xs ${cls}`} title="traffic status">
-                        {label}
-                      </span>
-                    </td>
-
-                    <td style={{ padding: 8 }}>
-                      <div style={{ display: "flex", gap: 6 }}>
-                        <input
-                          className="input"
-                          type="number"
-                          min={0}
-                          defaultValue={it.desired}
-                          onChange={(e) =>
-                            setScaling((s) => ({ ...s, [it.name]: Number(e.target.value) }))
-                          }
-                          style={{ width: 100 }}
-                        />
+                        {/* Monitor button (نفس شكل زر Scale تقريبًا) */}
                         <button
                           className="btn btn-primary"
-                          onClick={() => doScale(it.name, scaling[it.name] ?? it.desired)}
-                        >
-                          Scale
-                        </button>
-                      </div>
-                    </td>
-
-                    <td style={{ padding: 8 }}>
-                      {USE_GRAFANA ? (
-                        <a
-                          className="px-2 py-1 text-sm rounded bg-blue-600"
-                          href={grafanaLink(ns, it.name)}
-                          target="_blank"
-                          rel="noreferrer"
+                          onClick={() => {
+                            const url = grafanaDashboardUrl(ns, it.name);
+                            window.open(url, "_blank", "noopener,noreferrer");
+                          }}
                           title="Open in Grafana"
                         >
-                          Monitor
-                        </a>
-                      ) : (
-                        <button
-                          className="px-2 py-1 text-sm rounded bg-blue-600"
-                          onClick={() => router.push(`/monitor/${ns}/${it.name}`)}
-                          title="Monitor"
-                        >
-                          Monitor
+                          Open in Grafana
                         </button>
-                      )}
+
+                        {/*
+                        <button
+                          className="btn btn-secondary"
+                          onClick={() => {
+                            const url = grafanaExploreLokiUrl(ns, it.name);
+                            window.open(url, "_blank", "noopener,noreferrer");
+                          }}
+                          title="Logs (Explore)"
+                        >
+                          Logs (Explore)
+                        </button>
+                        */}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -218,7 +189,7 @@ export default function AppsStatusPage() {
 
               {items.length === 0 && (
                 <tr>
-                  <td colSpan={11} style={{ padding: 12, color: "var(--muted)" }}>
+                  <td colSpan={8} style={{ padding: 12, color: "var(--muted)" }}>
                     No apps yet. Go to <a href="/apps/new">Deploy App</a>.
                   </td>
                 </tr>

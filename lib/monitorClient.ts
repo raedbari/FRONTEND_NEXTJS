@@ -32,7 +32,19 @@ async function j<T = any>(u: string): Promise<T> {
   return r.json() as Promise<T>;
 }
 
-export const listApps   = () => j(`${API}/monitor/apps`);
+// قبل: كانت تضرب /monitor/apps
+export async function listApps() {
+  const base = process.env.NEXT_PUBLIC_API_BASE || "/api";
+  const res = await fetch(`${base}/apps/status`, { cache: "no-store" });
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(`Failed: ${res.status} ${t}`);
+  }
+  const json = await res.json();
+  // backend يرجّع { items: StatusItem[] }
+  return json.items as any[];
+}
+
 export const getOverview= (ns:string,app:string) =>
   j(`${API}/monitor/overview?ns=${encodeURIComponent(ns)}&app=${encodeURIComponent(app)}`);
 export const getPods    = (ns:string,app:string) =>
