@@ -29,35 +29,37 @@ export default function AppsStatusPage() {
   const [scaling, setScaling] = useState<Record<string, number>>({});
   const [working, setWorking] = useState<string | null>(null); // لتعطيل الأزرار أثناء التنفيذ
 
-  async function load() {
-    try {
-      setErr(null);
-      setLoading(true);
+ async function load() {
+  try {
+    setErr(null);
+    setLoading(true);
 
-      // /api/monitor/apps
-      const data = await listApps();
+    // نتيجتنا من /api/apps/status تكون { items: [...] }
+    const data = await listApps();
+    const raw = Array.isArray(data) ? data : (data?.items ?? []);
 
-      // تحويل بسيط ليتوافق مع الأعمدة الحالية
-      const mapped: StatusItem[] = (data as any[]).map((x) => ({
-        namespace: x.namespace,
-        name: x.app,
-        image: x.image,
-        desired: x.replicas_desired ?? 0,
-        current: x.replicas_desired ?? 0,
-        available: x.replicas_available ?? 0,
-        updated: x.replicas_available ?? 0,
-        conditions: {},
-        svc_selector: null,
-        preview_ready: null,
-      }));
+    // تطبيع الحقول لتتوافق مع الـUI
+    const mapped: StatusItem[] = raw.map((x: any) => ({
+      namespace: x.namespace ?? "default",
+      name: x.name,                         // ← كان x.app
+      image: x.image ?? "",
+      desired: Number(x.desired ?? 0),      // ← كان replicas_desired
+      current: Number(x.current ?? 0),
+      available: Number(x.available ?? 0),
+      updated: Number(x.updated ?? 0),
+      conditions: x.conditions ?? {},
+      svc_selector: x.svc_selector ?? null,
+      preview_ready: x.preview_ready ?? null,
+    }));
 
-      setItems(mapped);
-    } catch (e: any) {
-      setErr(e?.message || "Failed to load status");
-    } finally {
-      setLoading(false);
-    }
+    setItems(mapped);
+  } catch (e: any) {
+    setErr(e?.message || "Failed to load status");
+  } finally {
+    setLoading(false);
   }
+}
+
 
   async function doScale(name: string, replicas: number) {
     try {
