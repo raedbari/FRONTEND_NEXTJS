@@ -12,17 +12,28 @@ const DASH_SLUG = "app-dashboard";
 const DEFAULT_FROM = "now-15m";
 const DEFAULT_TO = "now";
 
-export function grafanaDashboardUrl(ns: string, app: string) {
-  const params = new URLSearchParams({
-    "var-namespace": ns,
-    "var-app": app,
-    from: DEFAULT_FROM,
-    to: DEFAULT_TO,
-    theme: "dark",
-    kiosk: "tv", // اختياري: عرض أنظف
-  });
+// export function grafanaDashboardUrl(ns: string, app: string) {
+//   const params = new URLSearchParams({
+//     "var-namespace": ns,
+//     "var-app": app,
+//     from: DEFAULT_FROM,
+//     to: DEFAULT_TO,
+//     theme: "dark",
+//     kiosk: "tv", // اختياري: عرض أنظف
+//   });
 
-  // /grafana/d/<uid>/<slug>?...
+//   // /grafana/d/<uid>/<slug>?...
+//   return `${GRAFANA_BASE}/d/${encodeURIComponent(DASH_UID)}/${DASH_SLUG}?${params.toString()}`;
+// }
+export function grafanaDashboardUrl(ns: string, app: string) {
+  const params = new URLSearchParams([
+    ["var-var_namespace", ns],
+    ["var-var_app", app],
+    ["from", DEFAULT_FROM],
+    ["to", DEFAULT_TO],
+    ["theme", "dark"],
+    ["kiosk", "tv"],
+  ]);
   return `${GRAFANA_BASE}/d/${encodeURIComponent(DASH_UID)}/${DASH_SLUG}?${params.toString()}`;
 }
 
