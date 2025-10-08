@@ -11,22 +11,36 @@ export function getApiBase(): string {
   return fromEnv && fromEnv !== '' ? fromEnv : SSR_FALLBACK;
 }
 
-export async function apiGet<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${getApiBase()}${path}`, {
-    // لا حاجة لأي منفذ أو بروتوكول هنا — المتصفح سيستعمل نفس الأصل عبر /api
-    ...(init ?? {}),
+export async function apiGet(path: string) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  if (!res.ok) throw new Error(`GET ${path} -> ${res.status}: ${await res.text()}`);
-  return res.json() as Promise<T>;
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
 }
 
-export async function apiPost<T>(path: string, body: unknown, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${getApiBase()}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
+export async function apiPost(path: string, body: any) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     body: JSON.stringify(body),
-    ...(init ?? {}),
+    
   });
-  if (!res.ok) throw new Error(`POST ${path} -> ${res.status}: ${await res.text()}`);
-  return res.json() as Promise<T>;
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function getAppsStatus() {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/apps/status`, {
+    headers: {
+      "Authorization": `Bearer ${token}`,
+    },
+  });
+  return res.json();
 }
