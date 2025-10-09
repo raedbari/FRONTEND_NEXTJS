@@ -1,46 +1,78 @@
 // lib/api.ts
-const SSR_FALLBACK = process.env.SSR_API_BASE
-  ?? 'http://platform-api.default.svc.cluster.local:8000'; // يستدعي الـAPI داخل الكلاستر عند التنفيذ على الخادم
+
+// Base URL resolution (browser vs server)
+const SSR_FALLBACK =
+  process.env.SSR_API_BASE ??
+  "http://platform-api.default.svc.cluster.local:8000";
 
 export function getApiBase(): string {
-  // في المتصفح: استخدم مسار نسبي يمر عبر الـIngress/TLS
-  if (typeof window !== 'undefined') return '/api';
+  // In the browser, go through Ingress/TLS with a relative path
+  if (typeof window !== "undefined") return "/api";
 
-  // في الخادم (SSR/Server Actions): خذ من المتغير العام إن وُجد، وإلا استخدم DNS الداخلي
+  // On the server (SSR), prefer explicit env, else cluster DNS
   const fromEnv = process.env.NEXT_PUBLIC_API_BASE?.trim();
-  return fromEnv && fromEnv !== '' ? fromEnv : SSR_FALLBACK;
+  return fromEnv && fromEnv !== "" ? fromEnv : SSR_FALLBACK;
 }
 
-export async function apiGet(path: string) {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}${path}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  if (!res.ok) throw new Error(await res.text());
+// --- Auth helpers (local only) ---
+function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  // Primary key we use now
+  const modern = localStorage.getItem("access_token");
+  if (modern) return modern;
+  // Backward-compat: older builds stored "token"
+  return localStorage.getItem("token");
+}
+
+// Merge headers safely
+function withAuthHeaders(init?: RequestInit): RequestInit {
+  const token = getToken();
+  const hdrs: Record<string, string> = {
+    ...(init?.headers as Record<string, string>),
+  };
+  if (token) hdrs.Authorization = `Bearer ${token}`;
+  return {
+    ...init,
+    headers: hdrs,
+    // we don't use cookies; keep requests clean
+    credentials: "omit",
+  };
+}
+
+// ---- Generic GET/POST wrappers ----
+export async function apiGet(path: string, init?: RequestInit) {
+  const base = getApiBase();
+  const res = await fetch(`${base}${path}`, withAuthHeaders(init));
+  if (res.status === 401 || res.status === 403) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    throw new Error(await res.text());
+  }
   return res.json();
 }
 
-export async function apiPost(path: string, body: any) {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: JSON.stringify(body),
-    
-  });
-  if (!res.ok) throw new Error(await res.text());
+export async function apiPost(path: string, body: any, init?: RequestInit) {
+  const base = getApiBase();
+  const res = await fetch(
+    `${base}${path}`,
+    withAuthHeaders({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body ?? {}),
+      ...init,
+    })
+  );
+  if (res.status === 401 || res.status === 403) {
+    throw new Error("unauthorized");
+  }
+  if (!res.ok) {
+    throw new Error(await res.text());
+  }
   return res.json();
 }
 
+// ---- Domain APIs ----
 export async function getAppsStatus() {
-  const token = localStorage.getItem("token");
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/apps/status`, {
-    headers: {
-      "Authorization": `Bearer ${token}`,
-    },
-  });
-  return res.json();
+  return apiGet("/apps/status");
 }

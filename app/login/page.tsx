@@ -15,7 +15,7 @@ export default function LoginPage() {
     setErr(null);
     setLoading(true);
     try {
-      // نستخدم المسار النسبي عبر الـIngress: /api/auth/login
+      // عبر الـIngress
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -24,22 +24,25 @@ export default function LoginPage() {
 
       if (res.ok) {
         const data = await res.json();
-        // Backend يعيد access_token / user / tenant ...
+        // احفظ بنفس المفتاح الذي تقرأه بقية الواجهة
         localStorage.setItem("token", data.access_token);
-        // حفظ معلومات مفيدة اختيارية:
+        // اختياري: احفظ معلومات للمستقبل
+        if (data?.user)   localStorage.setItem("user", JSON.stringify(data.user));
+        if (data?.tenant) localStorage.setItem("tenant", JSON.stringify(data.tenant));
         if (data?.tenant?.k8s_namespace) {
           localStorage.setItem("ns", data.tenant.k8s_namespace);
         }
-        router.push("/apps");
+        // استخدم replace لتجنب الرجوع لصفحة الدخول عند Back
+        router.replace("/apps");
         return;
       }
 
-      // حالة حساب "pending" → 403 من السيرفر → نرسل المستخدم لصفحة pending
+      // حساب pending
       if (res.status === 403) {
         const data = await res.json().catch(() => ({}));
         const msg = (data?.detail ?? "").toString().toLowerCase();
         if (msg.includes("pending")) {
-          router.push("/pending");
+          router.replace("/pending");
           return;
         }
         setErr(data?.detail ?? "Forbidden");
@@ -62,7 +65,7 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen bg-[#0b1220] relative overflow-hidden">
-      {/* خلفية شبكية خفيفة */}
+      
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.08]"
         style={{
@@ -71,30 +74,23 @@ export default function LoginPage() {
         }}
       />
 
-      {/* هيدر بسيط */}
       <header className="max-w-6xl mx-auto flex items-center justify-between px-6 py-6">
         <h1 className="text-lg font-semibold tracking-wide text-white/90">
           Smart <span className="text-sky-400">DevOps</span>
         </h1>
         <nav className="hidden md:flex items-center gap-2">
-          <a href="/apps" className="btn btn-ghost">
-            Apps Status
-          </a>
-          <a href="/apps/new" className="btn btn-ghost">
-            Deploy App
-          </a>
+          <a href="/apps" className="btn btn-ghost">Apps Status</a>
+          <a href="/apps/new" className="btn btn-ghost">Deploy App</a>
         </nav>
       </header>
 
-      {/* البطاقة */}
+
       <section className="max-w-6xl mx-auto px-4 mt-8">
         <div className="mx-auto w-full max-w-md">
           <div className="rounded-2xl bg-white/5 backdrop-blur border border-white/10 shadow-xl p-6 sm:p-8">
             <div className="mb-6 text-center">
               <h2 className="text-white text-xl font-bold">Sign in</h2>
-              <p className="text-white/60 text-sm mt-1">
-                Enter your email and password
-              </p>
+              <p className="text-white/60 text-sm mt-1">Enter your email and password</p>
             </div>
 
             <form className="space-y-4" onSubmit={onSubmit}>
@@ -137,10 +133,9 @@ export default function LoginPage() {
                 {loading ? "Signing in…" : "Sign in"}
               </button>
 
-              {/* تلميح للحساب التجريبي */}
+
               <p className="text-center text-xs text-white/50 mt-2">
-                Try: <span className="font-mono">demo@local</span> /{" "}
-                <span className="font-mono">demo123</span>
+                Try: <span className="font-mono">demo@local</span> / <span className="font-mono">demo123</span>
               </p>
             </form>
           </div>

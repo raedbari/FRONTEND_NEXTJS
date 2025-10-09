@@ -1,11 +1,15 @@
-// app/apps/page.tsx
+
 "use client";
+
+
+
 
 import RequireAuth from "@/components/RequireAuth";
 import { useEffect, useState } from "react";
-import { listApps } from "@/lib/monitorClient";
-import { apiPost } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { apiGet, apiPost } from "@/lib/api";
 import { grafanaDashboardUrl } from "@/lib/grafana";
+import { getToken } from "@/lib/auth";
 
 type StatusItem = {
   namespace?: string;
@@ -21,6 +25,7 @@ type StatusItem = {
 };
 
 export default function AppsPage() {
+  const router = useRouter();
   const [items, setItems] = useState<StatusItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -32,12 +37,20 @@ export default function AppsPage() {
       setErr(null);
       setLoading(true);
 
-      const data = await listApps();
-      const raw = Array.isArray(data) ? data : data?.items ?? [];
+      // تحقّق سريع من وجود التوكن (RequireAuth يغطي هذا، بس نخليه احتياطيًا)
+      const token = getToken();
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
+      // يعتمد بالكامل على الـAPI (التي تُفلتر بالـJWT ns)
+      const data = await apiGet("/apps/status"); // { items: [...] }
+      const raw = Array.isArray((data as any)?.items) ? (data as any).items : [];
 
       const mapped: StatusItem[] = raw.map((x: any) => ({
         namespace: x.namespace ?? "default",
-        name: x.name, // كان x.app
+        name: x.name,
         image: x.image ?? "",
         desired: Number(x.desired ?? 0),
         current: Number(x.current ?? 0),
@@ -50,6 +63,18 @@ export default function AppsPage() {
 
       setItems(mapped);
     } catch (e: any) {
+      const msg = (e?.message || "").toLowerCase();
+
+      // حالات شائعة
+      if (msg.includes("not authenticated") || msg.includes("401")) {
+        router.push("/login");
+        return;
+      }
+      if (msg.includes("pending")) {
+        router.push("/pending");
+        return;
+      }
+
       setErr(e?.message || "Failed to load status");
     } finally {
       setLoading(false);
@@ -70,6 +95,7 @@ export default function AppsPage() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -83,7 +109,7 @@ export default function AppsPage() {
         </div>
 
         {loading && <p>Loading…</p>}
-        {err && <p style={{ color: "#f99" }}>{err}</p>}
+        {err && <p style={{ color: "#f99" }}>Failed: {err}</p>}
 
         {!loading && !err && (
           <div style={{ overflowX: "auto", marginTop: 12 }}>
@@ -119,6 +145,7 @@ export default function AppsPage() {
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
                         }}
+                        title={it.image}
                       >
                         {it.image}
                       </td>
