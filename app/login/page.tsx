@@ -15,17 +15,46 @@ export default function LoginPage() {
     setErr(null);
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/auth/login`, {
+      // نستخدم المسار النسبي عبر الـIngress: /api/auth/login
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password: pass }),
       });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json(); // {token: "..."}
-      localStorage.setItem("token", data.token);
-      router.push("/apps");
+
+      if (res.ok) {
+        const data = await res.json();
+        // Backend يعيد access_token / user / tenant ...
+        localStorage.setItem("token", data.access_token);
+        // حفظ معلومات مفيدة اختيارية:
+        if (data?.tenant?.k8s_namespace) {
+          localStorage.setItem("ns", data.tenant.k8s_namespace);
+        }
+        router.push("/apps");
+        return;
+      }
+
+      // حالة حساب "pending" → 403 من السيرفر → نرسل المستخدم لصفحة pending
+      if (res.status === 403) {
+        const data = await res.json().catch(() => ({}));
+        const msg = (data?.detail ?? "").toString().toLowerCase();
+        if (msg.includes("pending")) {
+          router.push("/pending");
+          return;
+        }
+        setErr(data?.detail ?? "Forbidden");
+        return;
+      }
+
+      if (res.status === 404) {
+        setErr("Invalid email or password.");
+        return;
+      }
+
+      const text = await res.text();
+      setErr(text || `Login failed (${res.status})`);
     } catch (e: any) {
-      setErr(e?.message || "login faild ");
+      setErr(e?.message || "Network error");
     } finally {
       setLoading(false);
     }
@@ -34,10 +63,13 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-[#0b1220] relative overflow-hidden">
       {/* خلفية شبكية خفيفة */}
-      <div className="pointer-events-none absolute inset-0 opacity-[0.08]"
-           style={{ backgroundImage:
-            "radial-gradient(#7aa2f7 1px, transparent 1px)",
-            backgroundSize: "22px 22px" }} />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.08]"
+        style={{
+          backgroundImage: "radial-gradient(#7aa2f7 1px, transparent 1px)",
+          backgroundSize: "22px 22px",
+        }}
+      />
 
       {/* هيدر بسيط */}
       <header className="max-w-6xl mx-auto flex items-center justify-between px-6 py-6">
@@ -45,8 +77,12 @@ export default function LoginPage() {
           Smart <span className="text-sky-400">DevOps</span>
         </h1>
         <nav className="hidden md:flex items-center gap-2">
-          <a href="/apps" className="btn btn-ghost">Apps Status</a>
-          <a href="/apps/new" className="btn btn-ghost">Deploy App</a>
+          <a href="/apps" className="btn btn-ghost">
+            Apps Status
+          </a>
+          <a href="/apps/new" className="btn btn-ghost">
+            Deploy App
+          </a>
         </nav>
       </header>
 
@@ -55,11 +91,13 @@ export default function LoginPage() {
         <div className="mx-auto w-full max-w-md">
           <div className="rounded-2xl bg-white/5 backdrop-blur border border-white/10 shadow-xl p-6 sm:p-8">
             <div className="mb-6 text-center">
-              <h2 className="text-white text-xl font-bold">login</h2>
-              <p className="text-white/60 text-sm mt-1">Enter Your Email and Password</p>
+              <h2 className="text-white text-xl font-bold">Sign in</h2>
+              <p className="text-white/60 text-sm mt-1">
+                Enter your email and password
+              </p>
             </div>
 
-            <form className="space-y-4" onSubmit={onSubmit} dir="rtl">
+            <form className="space-y-4" onSubmit={onSubmit}>
               <div>
                 <label className="block text-sm text-white/70 mb-1">Email</label>
                 <input
@@ -96,12 +134,13 @@ export default function LoginPage() {
                 disabled={loading}
                 className="btn btn-primary w-full h-11 text-[15px]"
               >
-                {loading ? "loading" : "دخول"}
+                {loading ? "Signing in…" : "Sign in"}
               </button>
 
               {/* تلميح للحساب التجريبي */}
               <p className="text-center text-xs text-white/50 mt-2">
-                جرّب: <span className="font-mono">demo@local</span> / <span className="font-mono">demo123</span>
+                Try: <span className="font-mono">demo@local</span> /{" "}
+                <span className="font-mono">demo123</span>
               </p>
             </form>
           </div>
