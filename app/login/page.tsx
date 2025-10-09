@@ -25,7 +25,7 @@ export default function LoginPage() {
       localStorage.setItem("token", data.token);
       router.push("/apps");
     } catch (e: any) {
-      setErr(e?.message || "فشل تسجيل الدخول");
+      setErr(e?.message || "login faild ");
     } finally {
       setLoading(false);
     }
@@ -55,13 +55,13 @@ export default function LoginPage() {
         <div className="mx-auto w-full max-w-md">
           <div className="rounded-2xl bg-white/5 backdrop-blur border border-white/10 shadow-xl p-6 sm:p-8">
             <div className="mb-6 text-center">
-              <h2 className="text-white text-xl font-bold">تسجيل الدخول</h2>
-              <p className="text-white/60 text-sm mt-1">ادخل بريدك وكلمة المرور</p>
+              <h2 className="text-white text-xl font-bold">login</h2>
+              <p className="text-white/60 text-sm mt-1">Enter Your Email and Password</p>
             </div>
 
             <form className="space-y-4" onSubmit={onSubmit} dir="rtl">
               <div>
-                <label className="block text-sm text-white/70 mb-1">البريد الإلكتروني</label>
+                <label className="block text-sm text-white/70 mb-1">Email</label>
                 <input
                   type="email"
                   className="w-full input"
@@ -74,7 +74,7 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="block text-sm text-white/70 mb-1">كلمة المرور</label>
+                <label className="block text-sm text-white/70 mb-1">Password</label>
                 <input
                   type="password"
                   className="w-full input"
@@ -96,7 +96,7 @@ export default function LoginPage() {
                 disabled={loading}
                 className="btn btn-primary w-full h-11 text-[15px]"
               >
-                {loading ? "جارٍ الدخول…" : "دخول"}
+                {loading ? "loading" : "دخول"}
               </button>
 
               {/* تلميح للحساب التجريبي */}
