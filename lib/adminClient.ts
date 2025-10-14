@@ -15,6 +15,7 @@ const BASE =
     ? process.env.NEXT_PUBLIC_API_BASE.replace(/\/+$/, "")
     : "";
 
+    
 
 /** يرجع HeadersInit صالح دائمًا (بدون undefined) */
 function buildHeaders(): HeadersInit {
