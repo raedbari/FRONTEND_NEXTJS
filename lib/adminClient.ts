@@ -8,7 +8,13 @@ export type PendingTenant = {
 };
 
 // اضبط BASE مرة واحدة
-const BASE = (process.env.NEXT_PUBLIC_API_BASE ?? "").replace(/\/+$/, "");
+const BASE =
+  typeof process !== "undefined" &&
+  process.env.NEXT_PUBLIC_API_BASE &&
+  process.env.NEXT_PUBLIC_API_BASE.trim() !== ""
+    ? process.env.NEXT_PUBLIC_API_BASE.replace(/\/+$/, "")
+    : "";
+
 
 /** يرجع HeadersInit صالح دائمًا (بدون undefined) */
 function buildHeaders(): HeadersInit {
