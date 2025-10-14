@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { listPendingTenants, approveTenant, rejectTenant, PendingTenant } from "@/lib/adminClient";
-import RequireAuth from "app/components/RequireAuth";
+import RequireAuth from "@/components/RequireAuth";
 
 export default function AdminTenantsPage() {
   const [items, setItems] = useState<PendingTenant[]>([]);
