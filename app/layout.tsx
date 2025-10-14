@@ -16,12 +16,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link href="/" style={{ fontWeight: 800, letterSpacing: 0.2 }}>
               Smart DevOps
             </Link>
+
             <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-              <Link href="/apps/new" className="btn btn-ghost">Deploy App</Link>
-              <Link href="/apps" className="btn btn-ghost">Apps Status</Link>
+              <Link href="/apps/new" className="btn btn-ghost">
+                Deploy App
+              </Link>
+              <Link href="/apps" className="btn btn-ghost">
+                Apps Status
+              </Link>
             </div>
           </nav>
         </header>
+
         <main className="container" style={{ paddingTop: 24, paddingBottom: 40 }}>
           {children}
         </main>
