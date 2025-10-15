@@ -9,8 +9,8 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const headersList = headers();
-  const currentPath = headersList.get("x-invoke-path") || ""; // المسار الحالي
-  const isAuthPage = currentPath.startsWith("/auth"); // يتحقق إن كانت صفحة تسجيل الدخول أو التسجيل
+  const currentPath = headersList.get("x-invoke-path") || "";
+  const isAuthPage = currentPath.startsWith("/auth");
 
   return (
     <html lang="en">
@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </Link>
 
               <div className="flex gap-6">
-                <Link href="/apps/new" className="text-cyan-300 hover:text-white transition">
+                <Link href="/apps/deploy" className="text-cyan-300 hover:text-white transition">
                   Deploy
                 </Link>
                 <Link href="/apps" className="text-cyan-300 hover:text-white transition">
