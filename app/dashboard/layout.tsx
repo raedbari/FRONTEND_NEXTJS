@@ -61,18 +61,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Link>
 
               <Link
-                href="/dashboard/apps/new"
+                href="/dashboard/deploy"
                 className="hover:text-cyan-300 transition-colors duration-200"
               >
                 Deploy
               </Link>
 
-              <Link
-                href="/dashboard/monitor"
-                className="hover:text-cyan-300 transition-colors duration-200"
-              >
-                Monitor
-              </Link>
+              
             </div>
 
             {/* زر تسجيل الخروج */}

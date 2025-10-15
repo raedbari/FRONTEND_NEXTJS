@@ -7,7 +7,6 @@ export default function PendingPage() {
   const [status, setStatus] = useState<"pending" | "approved">("pending");
 
   useEffect(() => {
-    // 🔍 تحقق من حالة المستخدم
     const s = localStorage.getItem("status");
     if (s === "approved") setStatus("approved");
   }, []);
@@ -30,7 +29,7 @@ export default function PendingPage() {
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* 🌟 محتوى الصفحة */}
+      {/* 🌟 المحتوى */}
       {status === "pending" ? (
         <>
           {/* 🕒 في انتظار الموافقة */}
@@ -78,7 +77,7 @@ export default function PendingPage() {
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ duration: 0.6, type: "spring" }}
+              transition={{ duration: 0.6, type: 'spring' }}
               className="mx-auto mb-6 w-20 h-20 rounded-full border-4 border-emerald-400/50 flex items-center justify-center"
             >
               <motion.svg
@@ -92,35 +91,39 @@ export default function PendingPage() {
                 animate={{ pathLength: 1 }}
                 transition={{ duration: 1.5, ease: "easeInOut" }}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M5 13l4 4L19 7"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </motion.svg>
             </motion.div>
 
             <h1 className="text-3xl font-bold mb-4 text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,0.6)]">
               Approved 🎉
             </h1>
-            <p className="text-white/70 mb-6 leading-relaxed">
-              Congratulations! Your account has been successfully verified and
-              approved.
+            <p className="text-white/70 mb-8 leading-relaxed">
+              Congratulations! Your account has been successfully verified and approved.
               <br />
-              You can now access your dashboard and start using the Smart DevOps
-              Platform.
+              You can now explore our documentation or log in to start using Smart DevOps Platform.
             </p>
-            <motion.button
-              whileHover={{
-                scale: 1.05,
-                boxShadow: "0 0 25px rgba(16,185,129,0.5)",
-              }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => (window.location.href = "/dashboard/apps")}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-white font-semibold shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:from-emerald-400 hover:to-teal-300 transition-all"
-            >
-              Go to Dashboard
-            </motion.button>
+
+            {/* 🔘 الأزرار الجديدة */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <motion.button
+                whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(16,185,129,0.5)" }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => (window.location.href = "/auth/login")}
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-white font-semibold shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:from-emerald-400 hover:to-teal-300 transition-all"
+              >
+                Go to Login
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05, boxShadow: "0 0 25px rgba(56,189,248,0.5)" }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => (window.location.href = "/auth/docs")}
+                className="px-6 py-3 rounded-xl border border-cyan-400/40 text-cyan-300 font-semibold hover:bg-cyan-400/10 transition-all"
+              >
+                Explore Docs
+              </motion.button>
+            </div>
           </motion.div>
         </>
       )}
