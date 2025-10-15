@@ -171,3 +171,26 @@ export default function PendingPage() {
     </main>
   );
 }
+useEffect(() => {
+  const checkStatus = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const res = await fetch("/api/user/status", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+
+    if (data.status === "approved") {
+      localStorage.setItem("status", "approved");
+      setStatus("approved");
+    }
+  };
+
+  checkStatus();
+
+  // تحقق كل 30 ثانية بشكل تلقائي
+  const interval = setInterval(checkStatus, 30000);
+  return () => clearInterval(interval);
+}, []);
+
