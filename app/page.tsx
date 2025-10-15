@@ -23,19 +23,19 @@ export default function LandingPage() {
   }, [router]);
 
   return (
-    <main className="relative flex flex-col items-center justify-center min-h-[90vh] px-6 text-center text-white overflow-hidden">
+    <main className="relative z-10 flex flex-col items-center justify-center min-h-[90vh] px-6 text-center text-white overflow-hidden">
       {/* 🟢 خلفية متدرجة نيونية */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0a1625] via-[#07111d] to-black -z-10" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,255,0.08),transparent_70%)] blur-3xl -z-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0a1625] via-[#07111d] to-black -z-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,255,0.08),transparent_70%)] blur-3xl -z-10 pointer-events-none" />
 
       {/* 🔵 دوائر نيون متحركة */}
       <motion.div
-        className="absolute w-72 h-72 bg-cyan-500/20 rounded-full blur-3xl"
+        className="absolute w-72 h-72 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none"
         animate={{ x: [0, 60, -40, 0], y: [0, -40, 40, 0] }}
         transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute bottom-20 right-10 w-64 h-64 bg-sky-400/20 rounded-full blur-3xl"
+        className="absolute bottom-20 right-10 w-64 h-64 bg-sky-400/20 rounded-full blur-3xl pointer-events-none"
         animate={{ x: [0, -50, 40, 0], y: [0, 50, -50, 0] }}
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
       />
@@ -72,6 +72,7 @@ export default function LandingPage() {
         transition={{ duration: 1, delay: 0.6 }}
         className="flex flex-wrap justify-center gap-4"
       >
+        {/* زر Get Started → /auth/login */}
         <motion.button
           whileHover={{
             scale: 1.05,
@@ -84,6 +85,7 @@ export default function LandingPage() {
           Get Started
         </motion.button>
 
+        {/* زر Learn More → /auth/docs */}
         <motion.button
           whileHover={{
             scale: 1.05,
@@ -109,18 +111,20 @@ export default function LandingPage() {
 
       {/* 🌊 موجة متغيرة اللون */}
       <motion.svg
-        className="absolute bottom-0 left-0 w-full"
+        className="absolute bottom-0 left-0 w-full pointer-events-none"
         viewBox="0 0 1440 320"
         preserveAspectRatio="none"
         animate={{ y: [0, 10, 0] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
       >
+
+        
         <defs>
-          {/* Gradient متغير اللون */}
+        
           <linearGradient id="waveGradient" x1="0" x2="1" y1="0" y2="0">
             <motion.stop
               offset="0%"
-              stopColor="#22d3ee" // cyan-400
+              stopColor="#22d3ee"
               animate={{
                 stopColor: ["#22d3ee", "#38bdf8", "#0ea5e9", "#22d3ee"],
               }}
@@ -128,7 +132,7 @@ export default function LandingPage() {
             />
             <motion.stop
               offset="100%"
-              stopColor="#38bdf8" // sky-400
+              stopColor="#38bdf8"
               animate={{
                 stopColor: ["#38bdf8", "#0ea5e9", "#22d3ee", "#38bdf8"],
               }}
