@@ -5,64 +5,64 @@ import Link from "next/link";
 export default function DocsPage() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-[#050b14] text-white px-6 py-16 relative overflow-hidden">
-      {/* خلفية نيون */}
+      {/* Neon background */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0a1625] via-[#07111d] to-black -z-10" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,255,0.12),transparent_70%)] blur-3xl -z-10" />
 
-      {/* محتوى الصفحة */}
+      {/* Page content */}
       <section className="max-w-4xl text-center space-y-6">
         <h1 className="text-4xl font-bold text-cyan-300 drop-shadow-[0_0_15px_rgba(0,255,255,0.5)]">
           📘 Smart DevOps Platform Documentation
         </h1>
         <p className="text-lg text-white/80 leading-relaxed">
-          Smart DevOps هي منصة سحابية ذكية لتسهيل نشر ومراقبة التطبيقات على Kubernetes Cluster.  
-          تم تصميمها لتكون بسيطة، سريعة، وآمنة، بحيث يمكن للمستخدمين تنفيذ عمليات DevOps بدون الحاجة للتعامل المباشر مع تعقيدات البنية التحتية.
+          Smart DevOps is an intelligent cloud platform that simplifies application deployment and monitoring on Kubernetes clusters.  
+          It is designed to be simple, fast, and secure, allowing users to perform DevOps operations without directly dealing with complex infrastructure.
         </p>
 
         <hr className="border-cyan-500/20 my-8" />
 
-        {/* أقسام التوثيق */}
+        {/* Documentation sections */}
         <div className="text-left space-y-8">
           <div>
-            <h2 className="text-2xl font-semibold text-cyan-300 mb-2">🚀 صفحة Deploy App</h2>
+            <h2 className="text-2xl font-semibold text-cyan-300 mb-2">🚀 Deploy App Page</h2>
             <p className="text-white/80">
-              هذه الصفحة تتيح لك إنشاء تطبيق جديد داخل Kubernetes Cluster.  
+              This page allows you to create a new application inside the Kubernetes cluster.  
               <br />
-              - **Name (k8s):** اسم التطبيق داخل Kubernetes.  
-              - **Image & Tag:** اسم الصورة من Docker Hub مع التاج المراد استخدامه.  
-              - **Port:** رقم المنفذ الذي يعمل عليه التطبيق داخل الحاوية.  
-              - **Replicas:** عدد النسخ (Pods) التي سيتم تشغيلها.  
-              - **Health Check Path:** مسار التحقق من صحة التطبيق (مثلاً `/healthz`).  
-              - **Environment Variables:** متغيرات البيئة (API keys, URLs, Config...).
+              - **Name (k8s):** The application's name inside Kubernetes.  
+              - **Image & Tag:** The Docker image name and the tag to use.  
+              - **Port:** The port number the app runs on inside the container.  
+              - **Replicas:** Number of copies (Pods) to be deployed.  
+              - **Health Check Path:** Path used for health checking (e.g., `/healthz`).  
+              - **Environment Variables:** Configuration such as API keys, URLs, etc.
             </p>
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-cyan-300 mb-2">📊 صفحة App Status</h2>
+            <h2 className="text-2xl font-semibold text-cyan-300 mb-2">📊 App Status Page</h2>
             <p className="text-white/80">
-              يمكنك من خلالها عرض جميع التطبيقات النشطة داخل Cluster ومتابعة حالة كل Deployment.  
-              - الحالة (Status)  
-              - عدد Pods النشطة  
-              - حالة Health Check  
-              - الأزرار:  
-                - **Restart App** لإعادة التشغيل  
-                - **Delete App** لحذف Deployment  
+              View all active applications within the cluster and monitor each deployment's state.  
+              - Status  
+              - Number of active Pods  
+              - Health Check state  
+              - Action buttons:  
+                - **Restart App** to restart the deployment  
+                - **Delete App** to remove the deployment  
             </p>
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-cyan-300 mb-2">🧠 صفحة Monitor</h2>
+            <h2 className="text-2xl font-semibold text-cyan-300 mb-2">🧠 Monitor Page</h2>
             <p className="text-white/80">
-              تعرض الرسوم البيانية والبيانات اللحظية من Prometheus و Grafana حول استخدام CPU، RAM و Network لكل Pod داخل Cluster.
+              Displays real-time charts and metrics from Prometheus and Grafana for CPU, RAM, and Network usage for each Pod inside the cluster.
             </p>
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold text-cyan-300 mb-2">🔐 نظام Login و Auth</h2>
+            <h2 className="text-2xl font-semibold text-cyan-300 mb-2">🔐 Login & Auth System</h2>
             <p className="text-white/80">
-              - يتم تسجيل الدخول عبر JWT Token يُخزَّن في localStorage.  
-              - النظام يتحقق من صلاحيته قبل الدخول إلى لوحة التحكم (Dashboard).  
-              - عند انتهاء Token يتم إعادة توجيه المستخدم تلقائيًا إلى صفحة Login.
+              - Login is done using a JWT token stored in localStorage.  
+              - The system validates the token before accessing the dashboard.  
+              - When the token expires, the user is automatically redirected to the Login page.
             </p>
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function DocsPage() {
             href="/auth/contact"
             className="inline-block px-6 py-3 bg-gradient-to-r from-cyan-600 to-cyan-400 text-white font-semibold rounded-lg shadow-[0_0_20px_rgba(0,255,255,0.3)] hover:from-cyan-500 hover:to-cyan-300 transition-all"
           >
-            📩 تواصل معنا
+            📩 Contact Us
           </Link>
         </div>
       </section>
