@@ -5,34 +5,43 @@ import { motion } from "framer-motion";
 
 export default function PendingPage() {
   const [status, setStatus] = useState<"pending" | "approved">("pending");
-
 useEffect(() => {
   const token = localStorage.getItem("access_token");
-  if (!token) return;
+  console.log("Access token:", token);
+
+  if (!token) {
+    console.warn("⚠️ No token found in localStorage, cannot check status");
+    return;
+  }
 
   async function checkStatus() {
+    console.log("🔁 Checking tenant status...");
     try {
       const res = await fetch("/api/onboarding/me/status", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
+
+      if (!res.ok) {
+        console.error("❌ Error fetching status:", res.status);
+      } else {
         const data = await res.json();
+        console.log("✅ Status response:", data);
         if (data.status === "active") {
           localStorage.setItem("status", "approved");
           setStatus("approved");
-          return; // توقف عند الموافقة
+          return; // stop polling
         }
       }
     } catch (e) {
       console.error("Error checking status:", e);
     }
 
-    // أعد المحاولة بعد 8 ثواني
     setTimeout(checkStatus, 8000);
   }
 
   checkStatus();
 }, []);
+
 
 
   const handleDocs = () => (window.location.href = "/docs");
