@@ -5,44 +5,63 @@ import { motion } from "framer-motion";
 
 export default function PendingPage() {
   const [status, setStatus] = useState<"pending" | "approved">("pending");
-useEffect(() => {
-  const token = localStorage.getItem("access_token");
-  console.log("Access token:", token);
 
-  if (!token) {
-    console.warn("⚠️ No token found in localStorage, cannot check status");
-    return;
-  }
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    console.log("Access token:", token);
 
-  async function checkStatus() {
-    console.log("🔁 Checking tenant status...");
-    try {
-      const res = await fetch("/api/onboarding/me/status", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    if (!token) {
+      console.warn("⚠️ No token found in localStorage, cannot check status");
+      return;
+    }
 
-      if (!res.ok) {
-        console.error("❌ Error fetching status:", res.status);
-      } else {
+    let isActive = true; // لتجنب memory leaks عند إغلاق الصفحة
+
+    async function checkStatus() {
+      if (!isActive) return;
+      console.log("🔁 Checking tenant status...");
+
+      try {
+        const res = await fetch("/api/onboarding/me/status", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) {
+          console.error("❌ Error fetching status:", res.status);
+          setTimeout(checkStatus, 15000);
+          return;
+        }
+
         const data = await res.json();
         console.log("✅ Status response:", data);
+
         if (data.status === "active") {
           localStorage.setItem("status", "approved");
           setStatus("approved");
-          return; // stop polling
+
+          // بعد الموافقة، نحذف التوكن المؤقت
+          localStorage.removeItem("access_token");
+
+          // يمكن توجيهه تلقائيًا بعد بضع ثوانٍ
+          setTimeout(() => {
+            window.location.href = "/auth/login";
+          }, 7000);
+        } else {
+          // إذا لا يزال Pending، نعيد الاستعلام بعد 15 ثانية
+          setTimeout(checkStatus, 15000);
         }
+      } catch (e) {
+        console.error("Error checking status:", e);
+        setTimeout(checkStatus, 20000);
       }
-    } catch (e) {
-      console.error("Error checking status:", e);
     }
 
-    setTimeout(checkStatus, 8000);
-  }
+    checkStatus();
 
-  checkStatus();
-}, []);
-
-
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const handleDocs = () => (window.location.href = "/docs");
   const handleLogin = () => (window.location.href = "/auth/login");
