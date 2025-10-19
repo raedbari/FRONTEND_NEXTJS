@@ -1,5 +1,3 @@
-
-  
 "use client";
 
 import { useState } from "react";
@@ -13,49 +11,69 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
-async function onSubmit(e: React.FormEvent) {
-  e.preventDefault();
-  setErr(null);
-  setLoading(true);
 
-  try {
-    const res = await fetch("/api/onboarding/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        company,
-        email,
-        password: pwd,
-        namespace: ns,
-        note,
-      }),
-    });
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setErr(null);
+    setLoading(true);
 
-    const data = await res.json();
+    try {
+      const res = await fetch("/api/onboarding/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          company,
+          email,
+          password: pwd,
+          namespace: ns,
+          note,
+        }),
+      });
 
-    if (!res.ok) {
-      throw new Error(data.detail || data.msg || "Registration failed");
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        // في حالة لم يكن الرد JSON صالحًا
+        console.warn("⚠️ Response is not valid JSON");
+      }
+
+      // 🔹 معالجة الأخطاء بناءً على كود الحالة
+      if (!res.ok) {
+        let message = "Registration failed. Please try again.";
+
+        if (res.status === 409) {
+          message = data?.detail || "Company already exists.";
+        } else if (res.status === 422) {
+          message = data?.detail || "Invalid input. Please check your fields.";
+        } else if (res.status === 500) {
+          message = "Internal Server Error. Please try again later.";
+        } else if (data?.detail) {
+          message = data.detail;
+        }
+
+        throw new Error(message);
+      }
+
+      // ✅ إذا استلمنا توكن من السيرفر
+      if (data?.access_token) {
+        localStorage.setItem("access_token", data.access_token);
+        localStorage.setItem("status", "pending");
+      }
+
+      setOk(true);
+
+      // ⏳ تأخير بسيط قبل التوجيه
+      setTimeout(() => {
+        window.location.href = "/auth/pending";
+      }, 1200);
+    } catch (e: any) {
+      console.error("❌ Registration error:", e);
+      setErr(e?.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
     }
-
-    // ✅ إذا استلمنا توكن من السيرفر
-    if (data.access_token) {
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("status", "pending");
-    }
-
-    setOk(true);
-
-    // ⏳ تأخير بسيط قبل التوجيه
-    setTimeout(() => {
-      window.location.href = "/auth/pending";
-    }, 1200);
-  } catch (e: any) {
-    console.error(e);
-    setErr(e?.message || "Failed");
-  } finally {
-    setLoading(false);
   }
-}
 
   return (
     <main className="relative min-h-screen flex items-center justify-center bg-[#050b14] text-white overflow-hidden">
@@ -113,7 +131,12 @@ async function onSubmit(e: React.FormEvent) {
               onChange={(e) => setNote(e.target.value)}
             />
 
-            {err && <p className="text-rose-400 text-sm text-center mt-2">{err}</p>}
+            {/* 🟥 عرض الأخطاء بشكل أنيق */}
+            {err && (
+              <p className="text-rose-400 text-sm text-center mt-2 font-medium">
+                {err}
+              </p>
+            )}
 
             <button
               type="submit"
@@ -133,10 +156,8 @@ async function onSubmit(e: React.FormEvent) {
             <br />
             You’ll be redirected shortly...
           </div>
-          
         )}
       </div>
-      
     </main>
   );
 }
