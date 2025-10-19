@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 export default function PendingPage() {
-  const [status, setStatus] = useState<"pending" | "approved">("pending");
+  const [status, setStatus] = useState<"pending" | "approved" | "rejected">("pending");
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -38,14 +38,15 @@ export default function PendingPage() {
         if (data.status === "active") {
           localStorage.setItem("status", "approved");
           setStatus("approved");
-
-          // بعد الموافقة، نحذف التوكن المؤقت
           localStorage.removeItem("access_token");
 
-          // يمكن توجيهه تلقائيًا بعد بضع ثوانٍ
+          // يمكن توجيهه تلقائيًا بعد الموافقة
           setTimeout(() => {
             window.location.href = "/auth/login";
           }, 7000);
+        } else if (data.status === "rejected") {
+          setStatus("rejected");
+          localStorage.setItem("status", "rejected");
         } else {
           // إذا لا يزال Pending، نعيد الاستعلام بعد 15 ثانية
           setTimeout(checkStatus, 15000);
@@ -85,7 +86,7 @@ export default function PendingPage() {
       />
 
       {/* 💬 المحتوى */}
-      {status === "pending" ? (
+      {status === "pending" && (
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -117,7 +118,9 @@ export default function PendingPage() {
             This process usually takes a few moments ⏳
           </p>
         </motion.div>
-      ) : (
+      )}
+
+      {status === "approved" && (
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -174,6 +177,60 @@ export default function PendingPage() {
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-white font-semibold shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:from-emerald-400 hover:to-teal-300 transition-all"
             >
               Get Started
+            </motion.button>
+          </div>
+        </motion.div>
+      )}
+
+      {status === "rejected" && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1 }}
+          className="max-w-lg bg-[#1a0f0f]/60 backdrop-blur-md border border-red-500/20 rounded-2xl shadow-[0_0_40px_rgba(239,68,68,0.1)] p-8"
+        >
+          <motion.div
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="mx-auto mb-6 w-20 h-20 rounded-full border-4 border-red-500/50 flex items-center justify-center"
+          >
+            <motion.svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="rgb(239,68,68)"
+              className="w-10 h-10"
+              initial={{ rotate: 0 }}
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 9v2m0 4h.01M12 19a7 7 0 100-14 7 7 0 000 14z"
+              />
+            </motion.svg>
+          </motion.div>
+
+          <h1 className="text-3xl font-bold mb-4 text-red-400">
+            Account Rejected ❌
+          </h1>
+          <p className="text-white/70 mb-6 leading-relaxed">
+            Unfortunately, your account request was rejected by the Smart
+            DevOps team.
+            <br />
+            Please review your company details and try again, or contact support
+            for more information.
+          </p>
+
+          <div className="flex gap-4 justify-center">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              onClick={handleLogin}
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-red-500 to-rose-400 text-white font-semibold shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:from-red-400 hover:to-rose-300 transition-all"
+            >
+              Try Again
             </motion.button>
           </div>
         </motion.div>
