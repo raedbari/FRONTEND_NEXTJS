@@ -3,7 +3,7 @@ import React from "react";
 import PrepareModal from "./PrepareModal";
 import PromoteModal from "./PromoteModal";
 import RollbackModal from "./RollbackModal";
-import { bgPromote, bgRollback } from "@/lib/apis/bluegreen";
+import { bgPromote, bgRollback } from "@/apis/bluegreen";
 
 type Props = {
   name?: string;
