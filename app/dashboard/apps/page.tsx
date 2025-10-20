@@ -131,19 +131,28 @@ export default function AppsPage() {
       fill="none"
       viewBox="0 0 24 24"
     >
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+      />
     </svg>
   );
 
   return (
     <RequireAuth>
       <main className="relative min-h-screen bg-[#050b14] text-white">
-        {/* 🔮 خلفية نيونية */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a1625] via-[#07111d] to-black -z-10" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,255,0.1),transparent_70%)] blur-3xl -z-10" />
 
-        {/* 📦 المحتوى */}
         <div className="max-w-6xl mx-auto p-8">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-cyan-300 drop-shadow-[0_0_12px_rgba(0,255,255,0.5)]">
@@ -189,6 +198,7 @@ export default function AppsPage() {
                     const ns = it.namespace ?? "default";
                     const isBusy = working === it.name;
                     const grafanaUrl = grafanaDashboardUrl(ns, it.name);
+                    const appUrl = `https://${it.name}.${ns}.apps.rango-project.duckdns.org`;
 
                     return (
                       <tr
@@ -196,8 +206,13 @@ export default function AppsPage() {
                         className="border-t border-white/10 hover:bg-white/5 transition-all"
                       >
                         <td className="px-4 py-3 text-white/70">{ns}</td>
-                        <td className="px-4 py-3 font-semibold text-cyan-300">{it.name}</td>
-                        <td className="px-4 py-3 font-mono truncate max-w-[240px] text-white/80" title={it.image}>
+                        <td className="px-4 py-3 font-semibold text-cyan-300">
+                          {it.name}
+                        </td>
+                        <td
+                          className="px-4 py-3 font-mono truncate max-w-[240px] text-white/80"
+                          title={it.image}
+                        >
                           {it.image}
                         </td>
                         <td className="px-4 py-3 text-center">{it.desired}</td>
@@ -219,8 +234,12 @@ export default function AppsPage() {
                               }
                               disabled={isBusy}
                             />
+
+                            {/* 🔹 Scale */}
                             <button
-                              onClick={() => doScale(it.name, scaling[it.name] ?? it.desired)}
+                              onClick={() =>
+                                doScale(it.name, scaling[it.name] ?? it.desired)
+                              }
                               disabled={isBusy}
                               className={`px-4 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all ${
                                 isBusy
@@ -231,11 +250,31 @@ export default function AppsPage() {
                               {isBusy && <Spinner />}
                               {isBusy ? "Scaling…" : "Scale"}
                             </button>
+
+                            {/* 🔹 Grafana */}
                             <button
-                              onClick={() => window.open(grafanaUrl, "_blank")}
+                              onClick={() =>
+                                window.open(grafanaUrl, "_blank")
+                              }
                               className="px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-white transition-all shadow-[0_0_8px_rgba(0,255,255,0.1)]"
                             >
                               Grafana
+                            </button>
+
+                            {/* 🔹 Open App — نفس تصميم Grafana */}
+                            <button
+                              onClick={() => {
+                                if (it.available > 0)
+                                  window.open(appUrl, "_blank");
+                              }}
+                              disabled={it.available < 1}
+                              className={`px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-white transition-all shadow-[0_0_8px_rgba(0,255,255,0.1)] ${
+                                it.available < 1
+                                  ? "opacity-40 cursor-not-allowed"
+                                  : ""
+                              }`}
+                            >
+                              Open App
                             </button>
                           </div>
                         </td>
@@ -245,9 +284,15 @@ export default function AppsPage() {
 
                   {items.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="px-6 py-6 text-center text-white/60">
+                      <td
+                        colSpan={8}
+                        className="px-6 py-6 text-center text-white/60"
+                      >
                         No applications found.{" "}
-                        <a href="/dashboard/apps/new" className="text-cyan-400 hover:underline">
+                        <a
+                          href="/dashboard/apps/new"
+                          className="text-cyan-400 hover:underline"
+                        >
                           Deploy one here
                         </a>
                         .
