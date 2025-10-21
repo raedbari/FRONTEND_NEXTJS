@@ -45,7 +45,7 @@ jobs:
   deploy_to_k8s:
     name: Set image & rollout on cluster
     needs: build_and_push
-    runs-on: self-hosted            # لـrunner عى EC2 الذي عليه kubectl موصول بالكلاستر
+    runs-on: self-hosted            # لـrunnr عى EC2 الذي عليه kubectl موصول بالكلاستر
     env:
       IMAGE: raedbari/frontend
       TAG: ${{ github.sha }}
