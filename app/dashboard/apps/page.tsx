@@ -198,7 +198,7 @@ export default function AppsPage() {
                     const ns = it.namespace ?? "default";
                     const isBusy = working === it.name;
                     const grafanaUrl = grafanaDashboardUrl(ns, it.name);
-                    const appUrl = `https://${it.name}.${ns}.apps.rango-project.duckdns.org`;
+                    const appUrl = `https://${it.name}.${ns}.apps.smartdevops.lat`;
 
                     return (
                       <tr
