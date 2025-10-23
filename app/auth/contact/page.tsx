@@ -9,10 +9,26 @@ export default function ContactPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert("✅ Message sent successfully! (simulation only)");
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  try {
+    const res = await fetch("https://smartdevops.lat/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+
+    if (!res.ok) throw new Error("Failed to send");
+
+    alert("✅ Message sent successfully!");
+    setForm({ name: "", email: "", message: "" });
+  } catch (err) {
+    console.error(err);
+    alert("❌ Failed to send message. Please try again.");
+  }
+};
+
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-[#050b14] text-white px-6 py-16 relative overflow-hidden">
