@@ -30,35 +30,60 @@ export default function DeployPage() {
   function removeEnv(i: number) {
     setEnv((prev) => prev.filter((_, idx) => idx !== i));
   }
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setResult(null);
-
-    if (!nameOk) return setError("Invalid name: must be lowercase, digits, hyphen (k8s-compliant).");
-    if (!image || !tag) return setError("Image and tag are required.");
-
-    const payload = {
-      name: name.trim(),
-      image: image.trim(),
-      tag: tag.trim(),
-      port: Number(port),
-      replicas: Number(replicas),
-      health_path: (healthPath || "/").trim(),
-      env: env.filter((e) => e.name && e.value),
-    };
-
-    try {
-      setSubmitting(true);
-      await apiPost("/apps/deploy", payload);
-      setResult("✅ Deployed successfully!");
-    } catch (err: any) {
-      setError(err?.message || "Deploy failed");
-    } finally {
-      setSubmitting(false);
+  function resolveNs(): string | undefined {
+  try {
+    const raw = localStorage.getItem("user");
+    if (raw) {
+      const u = JSON.parse(raw);
+      return (
+        u?.tenant?.k8s_namespace ||
+        u?.tenant?.ns ||
+        u?.k8s_namespace ||
+        u?.ns
+      );
     }
+    const t = localStorage.getItem("token");
+    if (!t) return;
+    const parts = t.split(".");
+    const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const json = JSON.parse(atob(b64));
+    return json?.ns || json?.k8s_namespace;
+  } catch {
+    return;
   }
+}
+
+ async function onSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  setError(null);
+  setResult(null);
+
+  if (!nameOk) return setError("Invalid name: must be lowercase, digits, hyphen (k8s-compliant).");
+  if (!image || !tag) return setError("Image and tag are required.");
+
+  const ns = resolveNs();
+
+  const payload = {
+    name: name.trim(),
+    image: image.trim(),
+    tag: tag.trim(),
+    port: Number(port),
+    replicas: Number(replicas),
+    health_path: (healthPath || "/").trim(),
+    env: env.filter((e) => e.name && e.value),
+    namespace: ns, // 🧠 هذا هو المفتاح!
+  };
+
+  try {
+    setSubmitting(true);
+    await apiPost("/apps/deploy", payload);
+    setResult("✅ Deployed successfully!");
+  } catch (err: any) {
+    setError(err?.message || "Deploy failed");
+  } finally {
+    setSubmitting(false);
+  }
+}
 
   return (
     <section
