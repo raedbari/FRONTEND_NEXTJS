@@ -29,27 +29,32 @@ export default function AppsPage() {
   const [working, setWorking] = useState<string | null>(null);
 
   function resolveNs(): string | undefined {
-    try {
-      const raw = localStorage.getItem("user");
-      if (raw) {
-        const u = JSON.parse(raw);
-        return (
-          u?.tenant?.k8s_namespace ||
-          u?.tenant?.ns ||
-          u?.k8s_namespace ||
-          u?.ns
-        );
-      }
-      const t = getToken();
-      if (!t) return;
-      const parts = t.split(".");
-      const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-      const json = JSON.parse(atob(b64));
-      return json?.ns || json?.k8s_namespace;
-    } catch {
-      return;
+  try {
+    const raw = localStorage.getItem("user");
+    if (raw) {
+      const u = JSON.parse(raw);
+      const ns =
+        u?.tenant?.k8s_namespace ||
+        u?.tenant?.ns ||
+        u?.k8s_namespace ||
+        u?.ns;
+      if (ns && typeof ns === "string" && ns.trim() !== "") return ns.trim();
     }
+
+    // fallback: فك التوكن نفسه (دائمًا مضمون)
+    const t = getToken();
+    if (!t) return;
+    const parts = t.split(".");
+    if (parts.length < 2) return;
+    const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const json = JSON.parse(atob(b64));
+    const ns = json?.ns || json?.k8s_namespace;
+    if (ns && typeof ns === "string" && ns.trim() !== "") return ns.trim();
+  } catch (err) {
+    console.error("Failed to resolve namespace", err);
   }
+}
+
 
   async function load() {
     try {
