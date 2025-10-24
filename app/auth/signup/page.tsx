@@ -12,13 +12,20 @@ export default function SignupPage() {
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
 
+  // ✅ استخدم المتغير البيئي الصحيح أو القيمة الافتراضية
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_BASE ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://smartdevops.lat/api";
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
     setLoading(true);
 
     try {
-      const res = await fetch("/api/onboarding/register", {
+      // ✅ استخدم المسار الكامل مع الـ base الصحيح
+      const res = await fetch(`${API_BASE}/onboarding/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -34,11 +41,9 @@ export default function SignupPage() {
       try {
         data = await res.json();
       } catch {
-        // في حالة لم يكن الرد JSON صالحًا
         console.warn("⚠️ Response is not valid JSON");
       }
 
-      // 🔹 معالجة الأخطاء بناءً على كود الحالة
       if (!res.ok) {
         let message = "Registration failed. Please try again.";
 
@@ -55,7 +60,7 @@ export default function SignupPage() {
         throw new Error(message);
       }
 
-      // ✅ إذا استلمنا توكن من السيرفر
+      // ✅ في حال نجاح العملية
       if (data?.access_token) {
         localStorage.setItem("access_token", data.access_token);
         localStorage.setItem("status", "pending");
@@ -63,7 +68,6 @@ export default function SignupPage() {
 
       setOk(true);
 
-      // ⏳ تأخير بسيط قبل التوجيه
       setTimeout(() => {
         window.location.href = "/auth/pending";
       }, 1200);
