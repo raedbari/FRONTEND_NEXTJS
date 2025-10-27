@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import RequireAuth from "@/components/RequireAuth";
 import { apiGet, apiPost } from "@/lib/api";
-import { grafanaDashboardUrl } from "@/lib/grafana";
 import { getToken } from "@/lib/auth";
 
 type StatusItem = {
@@ -254,29 +253,21 @@ export default function AppsPage() {
                               {isBusy ? "Scaling…" : "Scale"}
                             </button>
 
-                            {/* 🔹 Grafana (real link from backend) */}
+                            {/* 🔹 Grafana (Dynamic Link) */}
                             <button
-                              onClick={async () => {
+                              onClick={() => {
                                 try {
                                   const nsVal = ns ?? "default";
-                                  const resp = await apiGet(
-                                    `/monitor/grafana_link?ns=${encodeURIComponent(
-                                      nsVal
-                                    )}&app=${encodeURIComponent(
-                                      it.name
-                                    )}&kind=app`
-                                  );
-                                  const url =
-                                    (resp as any)?.grafana_url ||
-                                    (resp as any)?.url;
-                                  if (url) window.open(url, "_blank");
-                                  else alert("Grafana link not available");
-                                } catch (err: any) {
-                                  console.error(
-                                    "Failed to open Grafana:",
-                                    err
-                                  );
-                                  alert("Failed to fetch Grafana link");
+                                  const dashboardUid = "4XuMd2liz"; // معرّف الـ Dashboard
+                                  const baseUrl = "https://grafana.smartdevops.lat";
+                                  const dashboardPath = `/d/${dashboardUid}/kubernetes-cluster-prometheus`;
+                                  const grafanaUrl = `${baseUrl}${dashboardPath}?var-namespace=${encodeURIComponent(
+                                    nsVal
+                                  )}&var-pod=${encodeURIComponent(it.name)}`;
+                                  window.open(grafanaUrl, "_blank");
+                                } catch (err) {
+                                  console.error("Failed to open Grafana:", err);
+                                  alert("Failed to open Grafana dashboard");
                                 }
                               }}
                               className="px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-white transition-all shadow-[0_0_8px_rgba(0,255,255,0.1)]"
@@ -331,4 +322,3 @@ export default function AppsPage() {
     </RequireAuth>
   );
 }
-
