@@ -34,14 +34,16 @@ export async function listPendingTenants(): Promise<PendingTenant[]> {
   return res.json();
 }
 
-export async function approveTenant(id: number) {
+export async function approveTenant(id: number, body: { role: "client" | "devops" }) {
   const res = await fetch(`${BASE}/admin/tenants/${id}/approve`, {
     method: "POST",
     headers: buildHeaders(),
+    body: JSON.stringify(body), 
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
+
 
 export async function rejectTenant(id: number, reason?: string) {
   const res = await fetch(`${BASE}/admin/tenants/${id}/reject`, {
