@@ -254,26 +254,42 @@ export default function AppsPage() {
                             </button>
 
                             {/* 🔹 Grafana (Dynamic Link) */}
-                            <button
-                              onClick={() => {
-                                try {
-                                  const nsVal = ns ?? "default";
-                                  const dashboardUid = "4XuMd2liz"; // معرّف الـ Dashboard
-                                  const baseUrl = "https://grafana.smartdevops.lat";
-                                  const dashboardPath = `/d/${dashboardUid}/kubernetes-cluster-prometheus`;
-                                  const grafanaUrl = `${baseUrl}${dashboardPath}?var-namespace=${encodeURIComponent(
-                                    nsVal
-                                  )}&var-pod=${encodeURIComponent(it.name)}`;
-                                  window.open(grafanaUrl, "_blank");
-                                } catch (err) {
-                                  console.error("Failed to open Grafana:", err);
-                                  alert("Failed to open Grafana dashboard");
-                                }
-                              }}
-                              className="px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-white transition-all shadow-[0_0_8px_rgba(0,255,255,0.1)]"
-                            >
-                              Grafana
-                            </button>
+<button
+  onClick={() => {
+    try {
+      const nsVal = ns ?? "default";
+      const role = user?.role || "client"; // 🔸 اجلب الدور من حالة المستخدم (auth context)
+      
+      // 🔹 اختيار الـ Dashboard UID بناءً على الدور
+      let dashboardUid = "";
+      let dashboardSlug = "";
+
+      if (role === "client") {
+        dashboardUid = "client-dashboard";
+        dashboardSlug = "smartdevops-client-dashboard";
+      } else {
+        // لأي دور آخر مثل devops أو platform_admin
+        dashboardUid = "4XuMd2liz";
+        dashboardSlug = "smartdevops-engineer-dashboard";
+      }
+
+      const baseUrl = "https://grafana.smartdevops.lat";
+      const dashboardPath = `/d/${dashboardUid}/${dashboardSlug}`;
+      const grafanaUrl = `${baseUrl}${dashboardPath}?var-namespace=${encodeURIComponent(
+        nsVal
+      )}&var-pod=${encodeURIComponent(it.name)}`;
+
+      window.open(grafanaUrl, "_blank");
+    } catch (err) {
+      console.error("Failed to open Grafana:", err);
+      alert("Failed to open Grafana dashboard");
+    }
+  }}
+  className="px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-white transition-all shadow-[0_0_8px_rgba(0,255,255,0.1)]"
+>
+  Grafana
+</button>
+
 
                             {/* 🔹 Open App */}
                             <button
