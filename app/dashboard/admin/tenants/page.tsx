@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { listPendingTenants, approveTenant, rejectTenant, PendingTenant } from "@/lib/adminClient";
+import {
+  listPendingTenants,
+  approveTenant,
+  rejectTenant,
+  PendingTenant,
+} from "@/lib/adminClient";
 import RequireAuth from "@/components/RequireAuth";
 import { motion } from "framer-motion";
 
@@ -24,18 +29,12 @@ export default function AdminTenantsPage() {
     }
   }
 
-  async function doApprove(id: number) {
-    const role = await new Promise<string | null>((resolve) => {
-      const input = prompt("Assign role (client or devops):", "client");
-      resolve(input);
-    });
-    if (!role) return;
-
+  async function doApprove(id: number, role: "client" | "devops") {
     try {
       setWorkingId(id);
-      await approveTenant(id, { role }); // ✅ تمرير الدور إلى الـ backend
+      await approveTenant(id, { role }); // ✅ نمرر الدور مباشرة
       await load();
-      alert(`Approved ✔️ as ${role} — provisioning started in background`);
+      alert(`Approved ✔️ as ${role.toUpperCase()} — provisioning started in background`);
     } catch (e: any) {
       alert(e?.message || "Approve failed");
     } finally {
@@ -96,7 +95,9 @@ export default function AdminTenantsPage() {
           )}
 
           {loading && (
-            <p className="text-zinc-400 animate-pulse text-center py-4">Loading tenants…</p>
+            <p className="text-zinc-400 animate-pulse text-center py-4">
+              Loading tenants…
+            </p>
           )}
 
           {!loading && !err && (
@@ -132,16 +133,27 @@ export default function AdminTenantsPage() {
                       <td className="py-3 px-4 text-zinc-400">{t.email}</td>
                       <td className="py-3 px-4 font-mono text-sky-400">{t.k8s_namespace}</td>
                       <td className="py-3 px-4 flex justify-end gap-3">
+                        {/* ✅ زران لتحديد الدور مباشرة */}
                         <motion.button
-                          className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 transition disabled:opacity-50"
+                          className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 transition disabled:opacity-50"
                           disabled={workingId === t.id}
-                          onClick={() => doApprove(t.id)}
+                          onClick={() => doApprove(t.id, "devops")}
                           whileTap={{ scale: 0.95 }}
                         >
-                          {workingId === t.id ? "Working…" : "Approve"}
+                          {workingId === t.id ? "Working…" : "Approve as DevOps"}
                         </motion.button>
+
                         <motion.button
-                          className="px-4 py-2 rounded-lg bg-rose-700 hover:bg-rose-600 transition disabled:opacity-50"
+                          className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition disabled:opacity-50"
+                          disabled={workingId === t.id}
+                          onClick={() => doApprove(t.id, "client")}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          {workingId === t.id ? "Working…" : "Approve as Client"}
+                        </motion.button>
+
+                        <motion.button
+                          className="px-3 py-2 rounded-lg bg-rose-700 hover:bg-rose-600 transition disabled:opacity-50"
                           disabled={workingId === t.id}
                           onClick={() => doReject(t.id)}
                           whileTap={{ scale: 0.95 }}
