@@ -29,32 +29,31 @@ export default function AppsPage() {
   const [working, setWorking] = useState<string | null>(null);
 
   function resolveNs(): string | undefined {
-  try {
-    const raw = localStorage.getItem("user");
-    if (raw) {
-      const u = JSON.parse(raw);
-      const ns =
-        u?.tenant?.k8s_namespace ||
-        u?.tenant?.ns ||
-        u?.k8s_namespace ||
-        u?.ns;
+    try {
+      const raw = localStorage.getItem("user");
+      if (raw) {
+        const u = JSON.parse(raw);
+        const ns =
+          u?.tenant?.k8s_namespace ||
+          u?.tenant?.ns ||
+          u?.k8s_namespace ||
+          u?.ns;
+        if (ns && typeof ns === "string" && ns.trim() !== "") return ns.trim();
+      }
+
+      // fallback: فك التوكن نفسه (دائمًا مضمون)
+      const t = getToken();
+      if (!t) return;
+      const parts = t.split(".");
+      if (parts.length < 2) return;
+      const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      const json = JSON.parse(atob(b64));
+      const ns = json?.ns || json?.k8s_namespace;
       if (ns && typeof ns === "string" && ns.trim() !== "") return ns.trim();
+    } catch (err) {
+      console.error("Failed to resolve namespace", err);
     }
-
-    // fallback: فك التوكن نفسه (دائمًا مضمون)
-    const t = getToken();
-    if (!t) return;
-    const parts = t.split(".");
-    if (parts.length < 2) return;
-    const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-    const json = JSON.parse(atob(b64));
-    const ns = json?.ns || json?.k8s_namespace;
-    if (ns && typeof ns === "string" && ns.trim() !== "") return ns.trim();
-  } catch (err) {
-    console.error("Failed to resolve namespace", err);
   }
-}
-
 
   async function load() {
     try {
@@ -202,7 +201,6 @@ export default function AppsPage() {
                   {items.map((it) => {
                     const ns = it.namespace ?? "default";
                     const isBusy = working === it.name;
-                    const grafanaUrl = grafanaDashboardUrl(ns, it.name);
                     const appUrl = `https://${it.name}.${ns}.apps.smartdevops.lat`;
 
                     return (
@@ -256,17 +254,37 @@ export default function AppsPage() {
                               {isBusy ? "Scaling…" : "Scale"}
                             </button>
 
-                            {/* 🔹 Grafana */}
+                            {/* 🔹 Grafana (real link from backend) */}
                             <button
-                              onClick={() =>
-                                window.open(grafanaUrl, "_blank")
-                              }
+                              onClick={async () => {
+                                try {
+                                  const nsVal = ns ?? "default";
+                                  const resp = await apiGet(
+                                    `/monitor/grafana_link?ns=${encodeURIComponent(
+                                      nsVal
+                                    )}&app=${encodeURIComponent(
+                                      it.name
+                                    )}&kind=app`
+                                  );
+                                  const url =
+                                    (resp as any)?.grafana_url ||
+                                    (resp as any)?.url;
+                                  if (url) window.open(url, "_blank");
+                                  else alert("Grafana link not available");
+                                } catch (err: any) {
+                                  console.error(
+                                    "Failed to open Grafana:",
+                                    err
+                                  );
+                                  alert("Failed to fetch Grafana link");
+                                }
+                              }}
                               className="px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-white transition-all shadow-[0_0_8px_rgba(0,255,255,0.1)]"
                             >
                               Grafana
                             </button>
 
-                            {/* 🔹 Open App — نفس تصميم Grafana */}
+                            {/* 🔹 Open App */}
                             <button
                               onClick={() => {
                                 if (it.available > 0)
@@ -313,3 +331,4 @@ export default function AppsPage() {
     </RequireAuth>
   );
 }
+
