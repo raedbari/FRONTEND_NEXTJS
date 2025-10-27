@@ -27,6 +27,23 @@ export default function AppsPage() {
   const [scaling, setScaling] = useState<Record<string, number>>({});
   const [working, setWorking] = useState<string | null>(null);
 
+  // ✅ تعريف المستخدم (user) من localStorage
+  const [user, setUser] = useState<{ email?: string; role?: string } | null>(
+    null
+  );
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("user");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setUser(parsed);
+      }
+    } catch (e) {
+      console.warn("Failed to parse user from localStorage", e);
+    }
+  }, []);
+
   function resolveNs(): string | undefined {
     try {
       const raw = localStorage.getItem("user");
@@ -40,7 +57,6 @@ export default function AppsPage() {
         if (ns && typeof ns === "string" && ns.trim() !== "") return ns.trim();
       }
 
-      // fallback: فك التوكن نفسه (دائمًا مضمون)
       const t = getToken();
       if (!t) return;
       const parts = t.split(".");
@@ -254,42 +270,45 @@ export default function AppsPage() {
                             </button>
 
                             {/* 🔹 Grafana (Dynamic Link) */}
-<button
-  onClick={() => {
-    try {
-      const nsVal = ns ?? "default";
-      const role = user?.role || "client"; // 🔸 اجلب الدور من حالة المستخدم (auth context)
-      
-      // 🔹 اختيار الـ Dashboard UID بناءً على الدور
-      let dashboardUid = "";
-      let dashboardSlug = "";
+                            <button
+                              onClick={() => {
+                                try {
+                                  const nsVal = ns ?? "default";
+                                  const role = user?.role || "client"; // ✅ يحدد الدور فعليًا الآن
 
-      if (role === "client") {
-        dashboardUid = "client-dashboard";
-        dashboardSlug = "smartdevops-client-dashboard";
-      } else {
-        // لأي دور آخر مثل devops أو platform_admin
-        dashboardUid = "4XuMd2liz";
-        dashboardSlug = "smartdevops-engineer-dashboard";
-      }
+                                  let dashboardUid = "";
+                                  let dashboardSlug = "";
 
-      const baseUrl = "https://grafana.smartdevops.lat";
-      const dashboardPath = `/d/${dashboardUid}/${dashboardSlug}`;
-      const grafanaUrl = `${baseUrl}${dashboardPath}?var-namespace=${encodeURIComponent(
-        nsVal
-      )}&var-pod=${encodeURIComponent(it.name)}`;
+                                  if (role === "client") {
+                                    dashboardUid = "client-dashboard";
+                                    dashboardSlug =
+                                      "smartdevops-client-dashboard";
+                                  } else {
+                                    dashboardUid = "4XuMd2liz";
+                                    dashboardSlug =
+                                      "smartdevops-engineer-dashboard";
+                                  }
 
-      window.open(grafanaUrl, "_blank");
-    } catch (err) {
-      console.error("Failed to open Grafana:", err);
-      alert("Failed to open Grafana dashboard");
-    }
-  }}
-  className="px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-white transition-all shadow-[0_0_8px_rgba(0,255,255,0.1)]"
->
-  Grafana
-</button>
+                                  const baseUrl =
+                                    "https://grafana.smartdevops.lat";
+                                  const dashboardPath = `/d/${dashboardUid}/${dashboardSlug}`;
+                                  const grafanaUrl = `${baseUrl}${dashboardPath}?var-namespace=${encodeURIComponent(
+                                    nsVal
+                                  )}&var-pod=${encodeURIComponent(it.name)}`;
 
+                                  window.open(grafanaUrl, "_blank");
+                                } catch (err) {
+                                  console.error(
+                                    "Failed to open Grafana:",
+                                    err
+                                  );
+                                  alert("Failed to open Grafana dashboard");
+                                }
+                              }}
+                              className="px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-white transition-all shadow-[0_0_8px_rgba(0,255,255,0.1)]"
+                            >
+                              Grafana
+                            </button>
 
                             {/* 🔹 Open App */}
                             <button
