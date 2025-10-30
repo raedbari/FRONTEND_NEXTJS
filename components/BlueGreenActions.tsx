@@ -22,7 +22,7 @@ export default function BlueGreenActions({ name, image, onChanged }: Props) {
 
   const Spinner = () => (
     <svg
-      className="animate-spin h-4 w-4 text-cyan-300"
+      className="animate-spin h-4 w-4 text-white"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -93,43 +93,46 @@ export default function BlueGreenActions({ name, image, onChanged }: Props) {
         </div>
       )}
 
-      {/* ⚙️ Actions */}
-      <div className="flex flex-wrap items-center gap-3 justify-center">
-        {/* Prepare */}
-        <button
-          onClick={() => setOpenPrepare(true)}
-          disabled={busy !== null}
-          title="Prepare preview release"
-          className="px-5 py-2 rounded-xl border border-cyan-400/30 text-cyan-300 hover:text-white hover:border-cyan-400 hover:bg-cyan-400/10 transition-all duration-200 shadow-[0_0_10px_rgba(0,255,255,0.1)] font-medium"
-        >
-          Prepare
-        </button>
-
-        {/* Promote */}
-        <button
-          onClick={doPromote}
-          disabled={busy !== null}
-          title="Promote preview to production"
-          className={`flex items-center justify-center gap-2 px-6 py-2 rounded-xl font-semibold transition-all duration-200 ${
-            busy === "promote"
-              ? "bg-cyan-700/60 cursor-not-allowed text-white/70"
-              : "bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white shadow-[0_0_20px_rgba(0,255,255,0.3)] hover:shadow-[0_0_30px_rgba(0,255,255,0.5)]"
-          }`}
-        >
-          {busy === "promote" && <Spinner />}
-          {busy === "promote" ? "Promoting…" : "Promote"}
-        </button>
-
-        {/* Rollback */}
-        <button
-          onClick={doRollback}
-          disabled={busy !== null}
-          title="Rollback to previous stable"
-          className="px-5 py-2 rounded-xl border border-rose-500/40 text-rose-300 hover:border-rose-400 hover:text-white hover:bg-rose-500/10 transition-all duration-200 shadow-[0_0_10px_rgba(255,0,100,0.2)] font-medium flex items-center gap-2"
-        >
-          {busy === "rollback" && <Spinner />}
-          {busy === "rollback" ? "Rolling back…" : "Rollback"}
-        </button>
+      {/* ⚙️ Unified Actions */}
+      <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
+        {[
+          {
+            label: "Prepare",
+            onClick: () => setOpenPrepare(true),
+            color: "from-cyan-500 to-cyan-400",
+            glow: "rgba(0,255,255,0.3)",
+          },
+          {
+            label: busy === "promote" ? "Promoting…" : "Promote",
+            onClick: doPromote,
+            color: "from-green-600 to-green-500",
+            glow: "rgba(0,255,128,0.3)",
+            spinner: busy === "promote",
+          },
+          {
+            label: busy === "rollback" ? "Rolling back…" : "Rollback",
+            onClick: doRollback,
+            color: "from-rose-600 to-rose-500",
+            glow: "rgba(255,64,100,0.3)",
+            spinner: busy === "rollback",
+          },
+        ].map((btn, i) => (
+          <button
+            key={i}
+            onClick={btn.onClick}
+            disabled={busy !== null}
+            className={`relative flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-semibold 
+              text-white transition-all duration-200
+              bg-gradient-to-r ${btn.color}
+              shadow-[0_0_20px_${btn.glow}]
+              hover:shadow-[0_0_30px_${btn.glow}]
+              hover:scale-[1.03]
+              disabled:opacity-60 disabled:cursor-not-allowed`}
+          >
+            {btn.spinner && <Spinner />}
+            {btn.label}
+          </button>
+        ))}
       </div>
 
       {/* 📦 Modals */}
@@ -178,4 +181,3 @@ export default function BlueGreenActions({ name, image, onChanged }: Props) {
     </div>
   );
 }
-
