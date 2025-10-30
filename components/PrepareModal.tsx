@@ -126,6 +126,7 @@ export default function PrepareModal({
             )}
           </div>
 
+
           {/* Image */}
           <div>
             <label className="text-sm font-medium text-white/70">Image</label>
