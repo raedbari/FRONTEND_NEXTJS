@@ -1,24 +1,58 @@
 "use client";
-
-import RequireAuth from "@/components/RequireAuth";
-import BlueGreenActions from "@/components/BlueGreenActions";
+import React, { useState } from "react";
+import PrepareModal from "./PrepareModal";
+import PromoteModal from "./PromoteModal";
+import RollbackModal from "./RollbackModal";
 
 export default function BlueGreenPage() {
-  return (
-    <RequireAuth>
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-white">Blue / Green Deployments</h2>
-          <p className="text-white/60 text-sm mt-1">
-            Prepare a preview release, promote it to production, or rollback safely.
-          </p>
-        </div>
+  const [activeModal, setActiveModal] = useState<null | "prepare" | "promote" | "rollback">(null);
 
-        {/* المكوّن المسؤول عن عمليات Blue/Green */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6 backdrop-blur">
-          <BlueGreenActions />
-        </div>
+  return (
+    <div className="relative z-0">
+      {/* الأزرار */}
+      <div className="flex justify-center gap-4 mb-10">
+        <button
+          onClick={() => setActiveModal("prepare")}
+          className="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-lg shadow"
+        >
+          Prepare
+        </button>
+        <button
+          onClick={() => setActiveModal("promote")}
+          className="px-5 py-2 bg-green-600 hover:bg-green-500 rounded-lg shadow"
+        >
+          Promote
+        </button>
+        <button
+          onClick={() => setActiveModal("rollback")}
+          className="px-5 py-2 bg-rose-600 hover:bg-rose-500 rounded-lg shadow"
+        >
+          Rollback
+        </button>
       </div>
-    </RequireAuth>
+
+      {/* نافذة واحدة فقط حسب الحالة */}
+      {activeModal === "prepare" && (
+        <PrepareModal
+          initial={{
+            name: "",
+            image: "",
+            tag: "",
+            port: 80,
+            health_path: "/",
+            replicas: 1,
+          }}
+          onClose={() => setActiveModal(null)}
+        />
+      )}
+
+      {activeModal === "promote" && (
+        <PromoteModal onClose={() => setActiveModal(null)} />
+      )}
+
+      {activeModal === "rollback" && (
+        <RollbackModal onClose={() => setActiveModal(null)} />
+      )}
+    </div>
   );
 }
