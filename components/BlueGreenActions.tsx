@@ -12,10 +12,7 @@ type Props = {
 };
 
 export default function BlueGreenActions({ name, image, onChanged }: Props) {
-  const [openPrepare, setOpenPrepare] = React.useState(false);
-  const [openPromote, setOpenPromote] = React.useState(false);
-  const [openRollback, setOpenRollback] = React.useState(false);
-
+  const [open, setOpen] = React.useState<"prepare" | "promote" | "rollback" | null>(null);
   const [busy, setBusy] = React.useState<"promote" | "rollback" | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -43,7 +40,7 @@ export default function BlueGreenActions({ name, image, onChanged }: Props) {
 
   async function doPromote() {
     if (!name) {
-      setOpenPromote(true);
+      setOpen("promote");
       return;
     }
     try {
@@ -62,7 +59,7 @@ export default function BlueGreenActions({ name, image, onChanged }: Props) {
 
   async function doRollback() {
     if (!name) {
-      setOpenRollback(true);
+      setOpen("rollback");
       return;
     }
     try {
@@ -80,7 +77,7 @@ export default function BlueGreenActions({ name, image, onChanged }: Props) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {/* 💬 Alerts */}
       {error && (
         <div className="border border-rose-800 bg-rose-900/30 text-rose-300 text-sm rounded-lg px-4 py-2 shadow-[0_0_8px_rgba(255,0,0,0.2)]">
@@ -93,54 +90,20 @@ export default function BlueGreenActions({ name, image, onChanged }: Props) {
         </div>
       )}
 
-      {/* ⚙️ Action Buttons */}
-      <div className="flex flex-wrap items-center justify-center gap-6">
-        {[
-          {
-            label: "Prepare",
-            onClick: () => setOpenPrepare(!openPrepare),
-            color: "from-cyan-500 to-cyan-400",
-            glow: "rgba(0,255,255,0.3)",
-          },
-          {
-            label: busy === "promote" ? "Promoting…" : "Promote",
-            onClick: () => setOpenPromote(!openPromote),
-            color: "from-green-600 to-green-500",
-            glow: "rgba(0,255,128,0.3)",
-            spinner: busy === "promote",
-          },
-          {
-            label: busy === "rollback" ? "Rolling back…" : "Rollback",
-            onClick: () => setOpenRollback(!openRollback),
-            color: "from-rose-600 to-rose-500",
-            glow: "rgba(255,64,100,0.3)",
-            spinner: busy === "rollback",
-          },
-        ].map((btn, i) => (
-          <button
-            key={i}
-            onClick={btn.onClick}
-            disabled={busy !== null}
-            className={`relative flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-semibold 
-              text-white transition-all duration-200
-              bg-gradient-to-r ${btn.color}
-              shadow-[0_0_15px_${btn.glow}]
-              hover:shadow-[0_0_25px_${btn.glow}]
-              hover:scale-[1.03]
-              disabled:opacity-60 disabled:cursor-not-allowed`}
-          >
-            {btn.spinner && <Spinner />}
-            {btn.label}
-          </button>
-        ))}
-      </div>
+      {/* ⚙️ زرار Prepare */}
+      <div className="flex flex-col items-center gap-4">
+        <button
+          onClick={() => setOpen(open === "prepare" ? null : "prepare")}
+          disabled={busy !== null}
+          className="px-6 py-2.5 rounded-xl font-semibold text-white transition-all duration-200 bg-gradient-to-r from-cyan-500 to-cyan-400 shadow-[0_0_15px_rgba(0,255,255,0.3)] hover:shadow-[0_0_25px_rgba(0,255,255,0.3)] hover:scale-[1.03] disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          Prepare
+        </button>
 
-      {/* 🧩 Inline Modals (تحت الأزرار مباشرة) */}
-      <div className="flex flex-col gap-10 mt-8">
-        {openPrepare && (
-          <div className="bg-white/5 border border-cyan-600/20 rounded-xl p-6">
+        {open === "prepare" && (
+          <div className="w-full max-w-2xl">
             <PrepareModal
-              onClose={() => setOpenPrepare(false)}
+              onClose={() => setOpen(null)}
               initial={{
                 name: name ?? "",
                 image: repo,
@@ -150,35 +113,69 @@ export default function BlueGreenActions({ name, image, onChanged }: Props) {
                 replicas: 1,
               }}
               afterSubmit={() => {
-                setOpenPrepare(false);
+                setOpen(null);
                 setNotice("✅ Prepare submitted successfully");
                 onChanged?.();
               }}
             />
           </div>
         )}
+      </div>
 
-        {openPromote && (
-          <div className="bg-white/5 border border-green-600/20 rounded-xl p-6">
+      {/* ⚙️ زرار Promote */}
+      <div className="flex flex-col items-center gap-4">
+        <button
+          onClick={() => setOpen(open === "promote" ? null : "promote")}
+          disabled={busy !== null}
+          className="px-6 py-2.5 rounded-xl font-semibold text-white transition-all duration-200 bg-gradient-to-r from-green-600 to-green-500 shadow-[0_0_15px_rgba(0,255,128,0.3)] hover:shadow-[0_0_25px_rgba(0,255,128,0.3)] hover:scale-[1.03] disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {busy === "promote" ? (
+            <span className="flex items-center gap-2">
+              <Spinner /> Promoting…
+            </span>
+          ) : (
+            "Promote"
+          )}
+        </button>
+
+        {open === "promote" && (
+          <div className="w-full max-w-2xl">
             <PromoteModal
-              onClose={() => setOpenPromote(false)}
+              onClose={() => setOpen(null)}
               initial={{ name: "" }}
               afterSubmit={() => {
-                setOpenPromote(false);
+                setOpen(null);
                 setNotice("✅ Promote submitted successfully");
                 onChanged?.();
               }}
             />
           </div>
         )}
+      </div>
 
-        {openRollback && (
-          <div className="bg-white/5 border border-rose-600/20 rounded-xl p-6">
+      {/* ⚙️ زرار Rollback */}
+      <div className="flex flex-col items-center gap-4">
+        <button
+          onClick={() => setOpen(open === "rollback" ? null : "rollback")}
+          disabled={busy !== null}
+          className="px-6 py-2.5 rounded-xl font-semibold text-white transition-all duration-200 bg-gradient-to-r from-rose-600 to-rose-500 shadow-[0_0_15px_rgba(255,64,100,0.3)] hover:shadow-[0_0_25px_rgba(255,64,100,0.3)] hover:scale-[1.03] disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {busy === "rollback" ? (
+            <span className="flex items-center gap-2">
+              <Spinner /> Rolling back…
+            </span>
+          ) : (
+            "Rollback"
+          )}
+        </button>
+
+        {open === "rollback" && (
+          <div className="w-full max-w-2xl">
             <RollbackModal
-              onClose={() => setOpenRollback(false)}
+              onClose={() => setOpen(null)}
               initial={{ name: "" }}
               afterSubmit={() => {
-                setOpenRollback(false);
+                setOpen(null);
                 setNotice("✅ Rollback submitted successfully");
                 onChanged?.();
               }}
