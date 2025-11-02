@@ -92,14 +92,15 @@ export default function PrepareModal({
   }
 
   return (
-    <div className="mt-6 mx-auto w-full max-w-md">
-      {/* ↓↓↓ نقلنا النافذة لتظهر أسفل الشاشة مع مسافة بسيطة للأعلى */}
-      <div className="w-full max-w-2xl bg-[#0a1625] border border-cyan-500/30 rounded-2xl shadow-[0_0_20px_rgba(0,255,255,0.2)] p-6 text-white backdrop-blur-md mx-auto mt-4">
-        <h3 className="text-2xl font-semibold text-cyan-400 mb-6 text-center">
-          Prepare Preview:{" "}
-          <span className="text-white">
-            {form.name || "(name pending)"}
-          </span>
+    <div
+      className="fixed inset-0 flex items-start justify-center z-50 pointer-events-none"
+      role="dialog"
+      aria-modal="true"
+    >
+      {/* النافذة فقط بدون خلفية سوداء */}
+      <div className="pointer-events-auto mt-20 bg-[#0a1625] border border-cyan-500/30 rounded-2xl shadow-[0_0_25px_rgba(0,255,255,0.2)] p-6 text-white backdrop-blur-md w-[420px]">
+        <h3 className="text-xl font-semibold text-cyan-400 mb-4 text-center">
+          Prepare Preview
         </h3>
 
         {error && (
@@ -108,101 +109,52 @@ export default function PrepareModal({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
-          {/* Name */}
-          <div>
-            <label className="text-sm font-medium text-white/70">
-              Name (k8s)
-            </label>
-            <input
-              className="mt-1 w-full rounded-lg bg-[#0f1f33] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:border-cyan-400 focus:ring-0 outline-none transition-all"
-              placeholder="e.g. nginx-test"
-              value={form.name}
-              onChange={(e) => set("name", e.target.value.toLowerCase())}
-            />
-            {!nameOk && (
-              <small className="text-xs opacity-60">
-                lowercase, digits, and dashes only; can’t start/end with “-”.
-              </small>
-            )}
-          </div>
-
-          {/* Image */}
-          <div>
-            <label className="text-sm font-medium text-white/70">Image</label>
-            <input
-              className="mt-1 w-full rounded-lg bg-[#0f1f33] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:border-cyan-400 focus:ring-0 outline-none transition-all"
-              placeholder="e.g. nginxinc/nginx-unprivileged"
-              value={form.image}
-              onChange={(e) => set("image", e.target.value)}
-            />
-            {!imgOk && (
-              <small className="text-xs opacity-60">image is required</small>
-            )}
-          </div>
-
-          {/* Tag */}
-          <div>
-            <label className="text-sm font-medium text-white/70">Tag</label>
-            <input
-              className="mt-1 w-full rounded-lg bg-[#0f1f33] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:border-cyan-400 focus:ring-0 outline-none transition-all"
-              placeholder="e.g. 1.27-alpine"
-              value={form.tag}
-              onChange={(e) => set("tag", e.target.value)}
-            />
-          </div>
-
-          {/* Port */}
-          <div>
-            <label className="text-sm font-medium text-white/70">Port</label>
-            <input
-              className="mt-1 w-full rounded-lg bg-[#0f1f33] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:border-cyan-400 focus:ring-0 outline-none transition-all"
-              type="number"
-              min={1}
-              max={65535}
-              value={form.port}
-              onChange={(e) => set("port", Number(e.target.value))}
-            />
-            {!portOk && (
-              <small className="text-xs opacity-60">port 1–65535</small>
-            )}
-          </div>
-
-          {/* Health path */}
-          <div className="col-span-2">
-            <label className="text-sm font-medium text-white/70">
-              Health path
-            </label>
-            <input
-              className="mt-1 w-full rounded-lg bg-[#0f1f33] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:border-cyan-400 focus:ring-0 outline-none transition-all"
-              placeholder="/healthz"
-              value={form.health_path}
-              onChange={(e) => set("health_path", e.target.value)}
-            />
-          </div>
-
-          {/* Replicas */}
-          <div>
-            <label className="text-sm font-medium text-white/70">
-              Replicas
-            </label>
-            <input
-              className="mt-1 w-full rounded-lg bg-[#0f1f33] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:border-cyan-400 focus:ring-0 outline-none transition-all"
-              type="number"
-              min={1}
-              max={50}
-              value={form.replicas}
-              onChange={(e) => set("replicas", Number(e.target.value))}
-            />
-          </div>
+        <div className="space-y-3">
+          <input
+            className="w-full rounded-lg bg-[#0f1f33] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:border-cyan-400 outline-none"
+            placeholder="Name (k8s)"
+            value={form.name}
+            onChange={(e) => set("name", e.target.value.toLowerCase())}
+          />
+          <input
+            className="w-full rounded-lg bg-[#0f1f33] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:border-cyan-400 outline-none"
+            placeholder="Image"
+            value={form.image}
+            onChange={(e) => set("image", e.target.value)}
+          />
+          <input
+            className="w-full rounded-lg bg-[#0f1f33] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:border-cyan-400 outline-none"
+            placeholder="Tag"
+            value={form.tag}
+            onChange={(e) => set("tag", e.target.value)}
+          />
+          <input
+            className="w-full rounded-lg bg-[#0f1f33] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:border-cyan-400 outline-none"
+            type="number"
+            placeholder="Port"
+            value={form.port}
+            onChange={(e) => set("port", Number(e.target.value))}
+          />
+          <input
+            className="w-full rounded-lg bg-[#0f1f33] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:border-cyan-400 outline-none"
+            placeholder="Health path"
+            value={form.health_path}
+            onChange={(e) => set("health_path", e.target.value)}
+          />
+          <input
+            className="w-full rounded-lg bg-[#0f1f33] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:border-cyan-400 outline-none"
+            type="number"
+            placeholder="Replicas"
+            value={form.replicas}
+            onChange={(e) => set("replicas", Number(e.target.value))}
+          />
         </div>
 
-        {/* Footer */}
         <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={onClose}
             disabled={submitting}
-            className="px-5 py-2.5 rounded-lg border border-white/20 text-white/80 hover:text-white hover:border-cyan-400 hover:bg-cyan-400/10 transition-all duration-200"
+            className="px-5 py-2.5 rounded-lg border border-white/20 text-white/80 hover:text-white hover:border-cyan-400 hover:bg-cyan-400/10 transition-all"
           >
             Cancel
           </button>
