@@ -80,21 +80,21 @@ export default function BlueGreenActions({ name, image, onChanged }: Props) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* 💬 Alerts */}
       {error && (
-        <div className="border border-rose-800 bg-rose-900/30 text-rose-300 text-sm rounded-lg px-4 py-2 shadow-[0_0_12px_rgba(255,0,0,0.2)]">
+        <div className="border border-rose-800 bg-rose-900/30 text-rose-300 text-sm rounded-lg px-4 py-2 shadow-[0_0_8px_rgba(255,0,0,0.2)]">
           {error}
         </div>
       )}
       {notice && (
-        <div className="border border-cyan-600/40 bg-cyan-900/20 text-cyan-300 text-sm rounded-lg px-4 py-2 shadow-[0_0_15px_rgba(0,255,255,0.2)]">
+        <div className="border border-cyan-600/40 bg-cyan-900/20 text-cyan-300 text-sm rounded-lg px-4 py-2 shadow-[0_0_10px_rgba(0,255,255,0.2)]">
           {notice}
         </div>
       )}
 
       {/* ⚙️ Unified Actions */}
-      <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
+      <div className="flex flex-wrap items-center justify-center gap-4">
         {[
           {
             label: "Prepare",
@@ -124,8 +124,8 @@ export default function BlueGreenActions({ name, image, onChanged }: Props) {
             className={`relative flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-semibold 
               text-white transition-all duration-200
               bg-gradient-to-r ${btn.color}
-              shadow-[0_0_20px_${btn.glow}]
-              hover:shadow-[0_0_30px_${btn.glow}]
+              shadow-[0_0_15px_${btn.glow}]
+              hover:shadow-[0_0_25px_${btn.glow}]
               hover:scale-[1.03]
               disabled:opacity-60 disabled:cursor-not-allowed`}
           >
@@ -135,57 +135,55 @@ export default function BlueGreenActions({ name, image, onChanged }: Props) {
         ))}
       </div>
 
-      {/* 📦 Modals */}
-      {/* 📦 Modals */}
-{openPrepare && (
-  <div className="fixed inset-0 z-50">
-    <PrepareModal
-      onClose={() => setOpenPrepare(false)}
-      initial={{
-        name: name ?? "",
-        image: repo,
-        tag,
-        port: 80,
-        health_path: "/",
-        replicas: 1,
-      }}
-      afterSubmit={() => {
-        setOpenPrepare(false);
-        setNotice("✅ Prepare submitted successfully");
-        onChanged?.();
-      }}
-    />
-  </div>
-)}
+      {/* 📦 Modals - أسفل الصفحة */}
+      {openPrepare && (
+        <div className="mt-6">
+          <PrepareModal
+            onClose={() => setOpenPrepare(false)}
+            initial={{
+              name: name ?? "",
+              image: repo,
+              tag,
+              port: 80,
+              health_path: "/",
+              replicas: 1,
+            }}
+            afterSubmit={() => {
+              setOpenPrepare(false);
+              setNotice("✅ Prepare submitted successfully");
+              onChanged?.();
+            }}
+          />
+        </div>
+      )}
 
-{openPromote && (
-  <div className="fixed inset-0 z-50">
-    <PromoteModal
-      onClose={() => setOpenPromote(false)}
-      initial={{ name: "" }}
-      afterSubmit={() => {
-        setOpenPromote(false);
-        setNotice("✅ Promote submitted successfully");
-        onChanged?.();
-      }}
-    />
-  </div>
-)}
+      {openPromote && (
+        <div className="mt-6">
+          <PromoteModal
+            onClose={() => setOpenPromote(false)}
+            initial={{ name: "" }}
+            afterSubmit={() => {
+              setOpenPromote(false);
+              setNotice("✅ Promote submitted successfully");
+              onChanged?.();
+            }}
+          />
+        </div>
+      )}
 
-{openRollback && (
-  <div className="fixed inset-0 z-50">
-    <RollbackModal
-      onClose={() => setOpenRollback(false)}
-      initial={{ name: "" }}
-      afterSubmit={() => {
-        setOpenRollback(false);
-        setNotice("✅ Rollback submitted successfully");
-        onChanged?.();
-      }}
-    />
-  </div>
-)}
+      {openRollback && (
+        <div className="mt-6">
+          <RollbackModal
+            onClose={() => setOpenRollback(false)}
+            initial={{ name: "" }}
+            afterSubmit={() => {
+              setOpenRollback(false);
+              setNotice("✅ Rollback submitted successfully");
+              onChanged?.();
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
-
