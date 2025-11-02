@@ -1,11 +1,7 @@
 "use client";
-import React, { useState } from "react";
-import PrepareModal from "./PrepareModal";
-import PromoteModal from "./PromoteModal";
-import RollbackModal from "./RollbackModal";
 
-export default function BlueGreenPage() {
-  const [activeModal, setActiveModal] = useState<null | "prepare" | "promote" | "rollback">(null);
+import RequireAuth from "@/components/RequireAuth";
+import BlueGreenActions from "@/components/BlueGreenActions";
 
   return (
     <div className="relative z-0">
