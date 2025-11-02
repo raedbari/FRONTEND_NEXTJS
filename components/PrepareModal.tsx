@@ -94,8 +94,8 @@ export default function PrepareModal({
   return (
     <div className="mt-6 mx-auto w-full max-w-md">
       {/* ↓↓↓ نقلنا النافذة لتظهر أسفل الشاشة مع مسافة بسيطة للأعلى */}
-      <div className="w-full max-w-2xl bg-[#0a1625] border border-cyan-500/30 rounded-2xl shadow-[0_0_25px_rgba(0,255,255,0.2)] p-6 relative text-white backdrop-blur-md mb-10">
-        <h3 className="text-xl font-bold text-cyan-300 mb-4">
+      <div className="w-full max-w-2xl bg-[#0a1625] border border-cyan-500/30 rounded-2xl shadow-[0_0_20px_rgba(0,255,255,0.2)] p-6 text-white backdrop-blur-md mx-auto mt-4">
+        <h3 className="text-2xl font-semibold text-cyan-400 mb-6 text-center">
           Prepare Preview:{" "}
           <span className="text-white">
             {form.name || "(name pending)"}
