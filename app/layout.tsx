@@ -15,10 +15,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* المحتوى الرئيسي */}
         <main className="flex-grow">{children}</main>
 
-        {/* الفوتر المثبّت في الأسفل */}
-        <footer className="w-full text-center py-3 text-white/60 text-sm border-t border-white/10 bg-[#050b14]">
-          Smart DevOps Platform — Dashboard © 2026
-        </footer>
+       
+        
       </body>
     </html>
   );
