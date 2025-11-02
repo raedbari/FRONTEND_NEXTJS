@@ -136,48 +136,52 @@ export default function BlueGreenActions({ name, image, onChanged }: Props) {
       </div>
 
       {/* 📦 Modals */}
-      {openPrepare && (
-        <PrepareModal
-          onClose={() => setOpenPrepare(false)}
-          initial={{
-            name: name ?? "",
-            image: repo,
-            tag,
-            port: 80,
-            health_path: "/",
-            replicas: 1,
-          }}
-          afterSubmit={() => {
-            setOpenPrepare(false);
-            setNotice("✅ Prepare submitted successfully");
-            onChanged?.();
-          }}
-        />
-      )}
+      {/* 📦 Modals */}
+{openPrepare && (
+  <div className="fixed inset-0 z-50">
+    <PrepareModal
+      onClose={() => setOpenPrepare(false)}
+      initial={{
+        name: name ?? "",
+        image: repo,
+        tag,
+        port: 80,
+        health_path: "/",
+        replicas: 1,
+      }}
+      afterSubmit={() => {
+        setOpenPrepare(false);
+        setNotice("✅ Prepare submitted successfully");
+        onChanged?.();
+      }}
+    />
+  </div>
+)}
 
-      {openPromote && (
-        <PromoteModal
-          onClose={() => setOpenPromote(false)}
-          initial={{ name: "" }}
-          afterSubmit={() => {
-            setOpenPromote(false);
-            setNotice("✅ Promote submitted successfully");
-            onChanged?.();
-          }}
-        />
-      )}
+{openPromote && (
+  <div className="fixed inset-0 z-50">
+    <PromoteModal
+      onClose={() => setOpenPromote(false)}
+      initial={{ name: "" }}
+      afterSubmit={() => {
+        setOpenPromote(false);
+        setNotice("✅ Promote submitted successfully");
+        onChanged?.();
+      }}
+    />
+  </div>
+)}
 
-      {openRollback && (
-        <RollbackModal
-          onClose={() => setOpenRollback(false)}
-          initial={{ name: "" }}
-          afterSubmit={() => {
-            setOpenRollback(false);
-            setNotice("✅ Rollback submitted successfully");
-            onChanged?.();
-          }}
-        />
-      )}
-    </div>
-  );
-}
+{openRollback && (
+  <div className="fixed inset-0 z-50">
+    <RollbackModal
+      onClose={() => setOpenRollback(false)}
+      initial={{ name: "" }}
+      afterSubmit={() => {
+        setOpenRollback(false);
+        setNotice("✅ Rollback submitted successfully");
+        onChanged?.();
+      }}
+    />
+  </div>
+)}

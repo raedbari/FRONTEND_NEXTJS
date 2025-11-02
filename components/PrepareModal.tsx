@@ -92,7 +92,7 @@ export default function PrepareModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-end justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm p-4">
       {/* ↓↓↓ نقلنا النافذة لتظهر أسفل الشاشة مع مسافة بسيطة للأعلى */}
       <div className="w-full max-w-2xl bg-[#0a1625] border border-cyan-500/30 rounded-2xl shadow-[0_0_25px_rgba(0,255,255,0.2)] p-6 relative text-white backdrop-blur-md mb-10">
         <h3 className="text-xl font-bold text-cyan-300 mb-4">

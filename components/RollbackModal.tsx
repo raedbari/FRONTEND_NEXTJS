@@ -1,19 +1,17 @@
-// app/components/RollbackModal.tsx
 "use client";
 import * as React from "react";
-import { bgRollback } from "@/apis/bluegreen"; // ثبّت المسار
+import { bgRollback } from "@/apis/bluegreen";
 
 const DNS1123 = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/;
 
 type Props = {
-  initial?: { name?: string }; // لا نحتاج namespace
+  initial?: { name?: string };
   onClose: () => void;
   afterSubmit?: () => void;
 };
 
 export default function RollbackModal({ initial, onClose, afterSubmit }: Props) {
   const [name, setName] = React.useState(initial?.name ?? "");
-  
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
@@ -21,14 +19,8 @@ export default function RollbackModal({ initial, onClose, afterSubmit }: Props) 
   const nameOk = DNS1123.test(name.trim());
   const canSubmit = nameOk && !submitting;
 
-  // Spinner موحّد
   const Spinner = () => (
-    <svg
-      className="animate-spin h-4 w-4 text-white"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-    >
+    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
     </svg>
@@ -40,36 +32,36 @@ export default function RollbackModal({ initial, onClose, afterSubmit }: Props) 
       setError(null);
       setNotice(null);
 
-      await bgRollback({ name: name.trim() }); // ← الاسم فقط؛ الـns من JWT
-      setNotice("Rollback submitted ✅");
+      await bgRollback({ name: name.trim() });
+      setNotice("✅ Rollback submitted successfully");
       afterSubmit?.();
       onClose();
     } catch (e: any) {
-      setError("Rollback failed: " + (e?.message || String(e)));
+      setError("❌ Rollback failed: " + (e?.message || String(e)));
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-      <div className="bg-zinc-900 text-zinc-100 rounded-2xl p-5 w-[420px] shadow-xl">
-        <div className="text-lg font-semibold mb-3">Rollback</div>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true">
+      <div className="w-full max-w-md bg-[#0a1625] border border-cyan-500/30 rounded-2xl shadow-[0_0_25px_rgba(0,255,255,0.2)] p-6 text-white relative">
+        <h3 className="text-xl font-bold text-cyan-300 mb-4">Rollback</h3>
 
         {error && (
-          <div className="text-rose-300 bg-rose-900/30 border border-rose-800 rounded-lg p-2 text-sm mb-3">
+          <div className="border border-rose-800 bg-rose-900/30 text-rose-300 text-sm rounded-lg px-4 py-2 mb-4">
             {error}
           </div>
         )}
         {notice && (
-          <div className="text-sky-300 bg-sky-900/30 border border-sky-800 rounded-lg p-2 text-sm mb-3">
+          <div className="border border-cyan-600/40 bg-cyan-900/20 text-cyan-300 text-sm rounded-lg px-4 py-2 mb-4">
             {notice}
           </div>
         )}
 
-        <label className="text-sm">App name</label>
+        <label className="text-sm font-medium text-white/70">App name</label>
         <input
-          className="w-full mt-1 mb-3 rounded-lg bg-zinc-800 px-3 py-2 outline-none"
+          className="mt-1 mb-2 w-full rounded-lg bg-[#0f1f33] border border-white/10 px-3 py-2 text-white placeholder-white/40 focus:border-cyan-400 focus:ring-0 outline-none transition-all"
           placeholder="my-app"
           value={name}
           onChange={(e) => setName(e.target.value.toLowerCase())}
@@ -80,20 +72,22 @@ export default function RollbackModal({ initial, onClose, afterSubmit }: Props) 
           </p>
         )}
 
-        <div className="flex gap-2 justify-end">
+        <div className="flex justify-end gap-3 mt-5">
           <button
-            className="btn btn-ghost border border-white/20 text-white/80 hover:text-white h-9 px-4"
             onClick={onClose}
             disabled={submitting}
+            className="px-5 py-2.5 rounded-lg border border-white/20 text-white/80 hover:text-white hover:border-cyan-400 hover:bg-cyan-400/10 transition-all duration-200"
           >
             Cancel
           </button>
           <button
-            disabled={!canSubmit}
-
             onClick={submit}
-            className="btn btn-primary h-9 px-4 flex items-center gap-2"
-            title="Rollback to previous stable"
+            disabled={!canSubmit}
+            className={`px-6 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-200 ${
+              canSubmit
+                ? "bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white shadow-[0_0_20px_rgba(0,255,255,0.3)]"
+                : "bg-cyan-900/40 text-white/40 cursor-not-allowed"
+            }`}
           >
             {submitting && <Spinner />}
             {submitting ? "Rolling back…" : "Rollback"}
