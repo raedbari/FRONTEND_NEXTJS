@@ -11,7 +11,7 @@ export default function DeployPage() {
   const [tag, setTag] = useState("");
   const [port, setPort] = useState<number>(3000);
   const [replicas, setReplicas] = useState<number>(1);
-  const [healthPath, setHealthPath] = useState("/healthz");
+  const [healthPath, setHealthPath] = useState("/");
   const [env, setEnv] = useState<EnvVar[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<string | null>(null);

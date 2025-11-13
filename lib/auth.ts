@@ -13,7 +13,6 @@ export async function login(email: string, password: string) {
   });
 
   if (!res.ok) {
-    // حاول نقرأ الرسالة القادمة من الـAPI (403 pending/suspended مثلاً)
     let msg = "Invalid email or password";
     try {
       const t = await res.text();
@@ -30,9 +29,8 @@ export async function login(email: string, password: string) {
     token_type: string;
   } = await res.json();
 
-  // احفظ التوكن بشكل موحّد
   localStorage.setItem("access_token", data.access_token);
-  // توافق خلفي لأي كود قديم لا يزال يقرأ "token"
+
   localStorage.setItem("token", data.access_token);
 
   localStorage.setItem("user", JSON.stringify(data.user));
@@ -53,7 +51,7 @@ export function logout() {
 
 // ---- Getters ----
 export function getToken(): string | null {
-  // الأحدث أولاً، ثم توافق خلفي
+
   return (
     localStorage.getItem("access_token") ||
     localStorage.getItem("token")
