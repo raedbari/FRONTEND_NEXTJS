@@ -32,7 +32,7 @@ export default function PromoteModal({ initial, onClose, afterSubmit }: Props) {
       setError(null);
       setNotice(null);
 
-      await bgPromote({ name: name.trim() }); // ns من الـ JWT
+      await bgPromote({ name: name.trim() });
       setNotice("✅ Promote submitted successfully");
       afterSubmit?.();
       onClose();
