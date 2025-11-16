@@ -52,22 +52,21 @@ export async function apiGet(path: string, init?: RequestInit) {
   return res.json();
 }
 
-export async function apiPost(path: string, body: any, init?: RequestInit) {
-  const base = getApiBase();
-  const res = await fetch(
-    `${base}${path}`,
-    withAuthHeaders({
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body ?? {}),
-      ...init,
-    })
-  );
-  if (res.status === 401 || res.status === 403) {
-    throw new Error("unauthorized");
-  }
+export async function apiPost(path: string, body?: any) {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`/api${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+
   if (!res.ok) {
-    throw new Error(await res.text());
+    const txt = await res.text();
+    throw new Error(txt);
   }
   return res.json();
 }

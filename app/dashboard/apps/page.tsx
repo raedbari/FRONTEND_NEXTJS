@@ -307,7 +307,7 @@ export default function AppsPage() {
                               }}
                               className="px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-white transition-all shadow-[0_0_8px_rgba(0,255,255,0.1)]"
                             >
-                              Grafana
+                              Monitor
                             </button>
 
                             {/* 🔹 Open App */}

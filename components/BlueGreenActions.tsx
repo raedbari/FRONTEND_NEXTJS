@@ -186,3 +186,4 @@ export default function BlueGreenActions({ name, image, onChanged }: Props) {
     </div>
   );
 }
+"
