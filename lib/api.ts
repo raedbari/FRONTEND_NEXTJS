@@ -1,77 +1,99 @@
 // lib/api.ts
 
-// Base URL resolution (browser vs server)
+// ==========================
+//  API Base URL Resolver
+// ==========================
 const SSR_FALLBACK =
   process.env.SSR_API_BASE ??
   "http://platform-api.default.svc.cluster.local:8000";
 
 export function getApiBase(): string {
-  // In the browser, go through Ingress/TLS with a relative path
+  // داخل المتصفح → استخدم /api (Ingress)
   if (typeof window !== "undefined") return "/api";
 
-  // On the server (SSR), prefer explicit env, else cluster DNS
+  // داخل سيرفر Next.js (SSR)
   const fromEnv = process.env.NEXT_PUBLIC_API_BASE?.trim();
   return fromEnv && fromEnv !== "" ? fromEnv : SSR_FALLBACK;
 }
 
-// --- Auth helpers (local only) ---
+// ==========================
+//  Token & Auth Helpers
+// ==========================
+
+// استرجاع التوكن بالطريقة الحديثة ← access_token
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
-  // Primary key we use now
+
+  // المفتاح الجديد
   const modern = localStorage.getItem("access_token");
   if (modern) return modern;
-  // Backward-compat: older builds stored "token"
+
+  // توافقية مع الإصدارات القديمة
   return localStorage.getItem("token");
 }
 
-// Merge headers safely
+// إضافة Authorization Header
 function withAuthHeaders(init?: RequestInit): RequestInit {
   const token = getToken();
-  const hdrs: Record<string, string> = {
+  const headers: Record<string, string> = {
     ...(init?.headers as Record<string, string>),
   };
-  if (token) hdrs.Authorization = `Bearer ${token}`;
+
+  if (token) headers.Authorization = `Bearer ${token}`;
+
   return {
     ...init,
-    headers: hdrs,
-    // we don't use cookies; keep requests clean
+    headers,
     credentials: "omit",
   };
 }
 
-// ---- Generic GET/POST wrappers ----
+// ==========================
+//  GET Wrapper
+// ==========================
 export async function apiGet(path: string, init?: RequestInit) {
   const base = getApiBase();
+
   const res = await fetch(`${base}${path}`, withAuthHeaders(init));
+
   if (res.status === 401 || res.status === 403) {
     throw new Error("unauthorized");
   }
   if (!res.ok) {
     throw new Error(await res.text());
   }
+
   return res.json();
 }
 
+// ==========================
+//  POST Wrapper  (الصحيح 100%)
+// ==========================
 export async function apiPost(path: string, body?: any) {
-  const token = localStorage.getItem("token");
+  const base = getApiBase();
 
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(`${base}${path}`, withAuthHeaders({
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(body),
-  });
+  }));
+
+  if (res.status === 401 || res.status === 403) {
+    throw new Error("unauthorized");
+  }
 
   if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(txt);
+    throw new Error(await res.text());
   }
+
   return res.json();
 }
 
-// ---- Domain APIs ----
+// ==========================
+//  Domain APIs
+// ==========================
 export async function getAppsStatus() {
   return apiGet("/apps/status");
 }
