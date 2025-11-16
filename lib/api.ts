@@ -11,7 +11,7 @@ export function getApiBase(): string {
   // داخل المتصفح → استخدم /api (Ingress)
   if (typeof window !== "undefined") return "/api";
 
-  // داخل سيرفر Next.js (SSR)
+  
   const fromEnv = process.env.NEXT_PUBLIC_API_BASE?.trim();
   return fromEnv && fromEnv !== "" ? fromEnv : SSR_FALLBACK;
 }
@@ -20,7 +20,6 @@ export function getApiBase(): string {
 //  Token & Auth Helpers
 // ==========================
 
-// استرجاع التوكن بالطريقة الحديثة ← access_token
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
 
@@ -67,7 +66,7 @@ export async function apiGet(path: string, init?: RequestInit) {
 }
 
 // ==========================
-//  POST Wrapper  (الصحيح 100%)
+//  POST Wrapper  
 // ==========================
 export async function apiPost(path: string, body?: any) {
   const base = getApiBase();
