@@ -94,6 +94,7 @@ export default function DocsPage() {
               <li><strong>Open App</strong> — Open And Use Your App Safly</li>
               <li><strong>Monitor</strong> — Monitor Your App health In Grafana Dashboard</li>
               <li><strong>Scale</strong> — Scale Your App To Make It Highly Available</li>
+              <li><strong>Delete</strong> — Delete Your App</li>
             </ul>
           </div>
 

@@ -27,21 +27,17 @@ export default function AppsPage() {
   const [scaling, setScaling] = useState<Record<string, number>>({});
   const [working, setWorking] = useState<string | null>(null);
 
-  // ✅ تعريف المستخدم (user) من localStorage
-  const [user, setUser] = useState<{ email?: string; role?: string } | null>(
-    null
-  );
+  // 🔹 Delete modal states
+  const [deleteTarget, setDeleteTarget] = useState<{ ns: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const [user, setUser] = useState<{ email?: string; role?: string } | null>(null);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem("user");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        setUser(parsed);
-      }
-    } catch (e) {
-      console.warn("Failed to parse user from localStorage", e);
-    }
+      if (raw) setUser(JSON.parse(raw));
+    } catch {}
   }, []);
 
   function resolveNs(): string | undefined {
@@ -54,20 +50,15 @@ export default function AppsPage() {
           u?.tenant?.ns ||
           u?.k8s_namespace ||
           u?.ns;
-        if (ns && typeof ns === "string" && ns.trim() !== "") return ns.trim();
+        if (ns?.trim()) return ns.trim();
       }
 
       const t = getToken();
       if (!t) return;
-      const parts = t.split(".");
-      if (parts.length < 2) return;
-      const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-      const json = JSON.parse(atob(b64));
+      const json = JSON.parse(atob(t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
       const ns = json?.ns || json?.k8s_namespace;
-      if (ns && typeof ns === "string" && ns.trim() !== "") return ns.trim();
-    } catch (err) {
-      console.error("Failed to resolve namespace", err);
-    }
+      if (ns?.trim()) return ns.trim();
+    } catch {}
   }
 
   async function load() {
@@ -76,23 +67,13 @@ export default function AppsPage() {
       setLoading(true);
 
       const token = getToken();
-      if (!token) {
-        router.push("/auth/login");
-        return;
-      }
+      if (!token) return router.push("/auth/login");
 
       const ns = resolveNs();
-      const url = ns
-        ? `/apps/status?ns=${encodeURIComponent(ns)}`
-        : `/apps/status`;
+      const url = ns ? `/apps/status?ns=${encodeURIComponent(ns)}` : `/apps/status`;
 
       const data = await apiGet(url);
-      const raw =
-        Array.isArray((data as any)?.items)
-          ? (data as any).items
-          : Array.isArray(data)
-          ? data
-          : [];
+      const raw = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
 
       const mapped: StatusItem[] = raw.map((x: any) => ({
         namespace: x.namespace ?? ns ?? "default",
@@ -110,16 +91,9 @@ export default function AppsPage() {
       setItems(mapped);
     } catch (e: any) {
       const msg = (e?.message || "").toLowerCase();
-
-      if (msg.includes("not authenticated") || msg.includes("401")) {
-        router.push("/auth/login");
-        return;
-      }
-      if (msg.includes("pending")) {
-        router.push("/auth/pending");
-        return;
-      }
-
+      if (msg.includes("401") || msg.includes("not authenticated"))
+        return router.push("/auth/login");
+      if (msg.includes("pending")) return router.push("/auth/pending");
       setErr(e?.message || "Failed to load status");
     } finally {
       setLoading(false);
@@ -136,6 +110,27 @@ export default function AppsPage() {
       alert(e?.message || "Scale failed");
     } finally {
       setWorking(null);
+    }
+  }
+
+  async function doDeleteApp() {
+    if (!deleteTarget) return;
+
+    try {
+      setDeleting(true);
+
+      await apiPost(
+        `/apps/delete?ns=${encodeURIComponent(deleteTarget.ns)}&name=${encodeURIComponent(
+          deleteTarget.name
+        )}`
+      );
+
+      setDeleteTarget(null);
+      await load();
+    } catch (err: any) {
+      alert(err?.message || "Delete failed");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -158,16 +153,47 @@ export default function AppsPage() {
         stroke="currentColor"
         strokeWidth="4"
       />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-      />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
     </svg>
   );
 
   return (
     <RequireAuth>
+      {/* 🔥 Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-[#0d1a29] border border-cyan-400/20 rounded-2xl p-6 w-full max-w-md shadow-[0_0_25px_rgba(0,255,255,0.2)]">
+            <h3 className="text-xl font-bold text-cyan-300 mb-4">Delete Application</h3>
+
+            <p className="text-white/80 mb-6">
+              Are you sure you want to delete:
+              <br />
+              <span className="text-cyan-400 font-semibold">{deleteTarget.name}</span>?
+              <br />
+              This will remove the Deployment, Service, Ingress and Blue-Green preview.
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={doDeleteApp}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 transition flex items-center gap-2"
+              >
+                {deleting && <Spinner />}
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="relative min-h-screen bg-[#050b14] text-white">
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a1625] via-[#07111d] to-black -z-10" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,255,0.1),transparent_70%)] blur-3xl -z-10" />
@@ -193,10 +219,6 @@ export default function AppsPage() {
             </div>
           )}
 
-          {loading && !err && (
-            <p className="text-white/70 text-sm">Loading applications...</p>
-          )}
-
           {!loading && !err && (
             <div className="overflow-x-auto rounded-2xl border border-cyan-400/10 bg-[rgba(10,20,30,0.5)] backdrop-blur-xl shadow-[0_0_25px_rgba(0,255,255,0.1)]">
               <table className="w-full text-sm text-white/90">
@@ -212,6 +234,7 @@ export default function AppsPage() {
                     <th className="px-4 py-3">Actions</th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {items.map((it) => {
                     const ns = it.namespace ?? "default";
@@ -219,31 +242,26 @@ export default function AppsPage() {
                     const appUrl = `https://${it.name}.${ns}.apps.smartdevops.lat`;
 
                     return (
-                      <tr
-                        key={`${ns}/${it.name}`}
-                        className="border-t border-white/10 hover:bg-white/5 transition-all"
-                      >
+                      <tr key={`${ns}/${it.name}`} className="border-t border-white/10 hover:bg-white/5 transition-all">
                         <td className="px-4 py-3 text-white/70">{ns}</td>
-                        <td className="px-4 py-3 font-semibold text-cyan-300">
-                          {it.name}
-                        </td>
-                        <td
-                          className="px-4 py-3 font-mono truncate max-w-[240px] text-white/80"
-                          title={it.image}
-                        >
+                        <td className="px-4 py-3 font-semibold text-cyan-300">{it.name}</td>
+
+                        <td className="px-4 py-3 font-mono truncate max-w-[240px] text-white/80" title={it.image}>
                           {it.image}
                         </td>
+
                         <td className="px-4 py-3 text-center">{it.desired}</td>
                         <td className="px-4 py-3 text-center">{it.current}</td>
                         <td className="px-4 py-3 text-center">{it.available}</td>
                         <td className="px-4 py-3 text-center">{it.updated}</td>
+
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-2 items-center justify-center">
                             <input
                               type="number"
                               min={0}
                               defaultValue={it.desired}
-                              className="rounded-lg bg-black/30 border border-cyan-500/20 text-white/80 w-20 text-center focus:outline-none focus:border-cyan-400 transition-all"
+                              className="rounded-lg bg-black/30 border border-cyan-500/20 text-white/80 w-20 text-center"
                               onChange={(e) =>
                                 setScaling((s) => ({
                                   ...s,
@@ -253,77 +271,65 @@ export default function AppsPage() {
                               disabled={isBusy}
                             />
 
-                            {/* 🔹 Scale */}
+                            {/* SCALE */}
                             <button
-                              onClick={() =>
-                                doScale(it.name, scaling[it.name] ?? it.desired)
-                              }
+                              onClick={() => doScale(it.name, scaling[it.name] ?? it.desired)}
                               disabled={isBusy}
                               className={`px-4 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all ${
                                 isBusy
-                                  ? "bg-cyan-700/40 cursor-not-allowed text-white/70"
-                                  : "bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 shadow-[0_0_15px_rgba(0,255,255,0.3)] text-white"
+                                  ? "bg-cyan-700/40 cursor-not-allowed"
+                                  : "bg-gradient-to-r from-cyan-600 to-cyan-500 hover:scale-105"
                               }`}
                             >
                               {isBusy && <Spinner />}
                               {isBusy ? "Scaling…" : "Scale"}
                             </button>
 
-                            {/* 🔹 Grafana (Dynamic Link) */}
+                            {/* MONITOR */}
                             <button
                               onClick={() => {
                                 try {
-                                  const nsVal = ns ?? "default";
-                                  const role = user?.role || "client"; // ✅ يحدد الدور فعليًا الآن
-
-                                  let dashboardUid = "";
-                                  let dashboardSlug = "";
-
+                                  const nsVal = ns;
+                                  const role = user?.role || "client";
+                                  let uid = "";
+                                  let slug = "";
                                   if (role === "client") {
-                                    dashboardUid = "client-dashboard";
-                                    dashboardSlug =
-                                      "smartdevops-client-dashboard";
+                                    uid = "client-dashboard";
+                                    slug = "smartdevops-client-dashboard";
                                   } else {
-                                    dashboardUid = "4XuMd2liz";
-                                    dashboardSlug =
-                                      "smartdevops-engineer-dashboard";
+                                    uid = "4XuMd2liz";
+                                    slug = "smartdevops-engineer-dashboard";
                                   }
-
-                                  const baseUrl =
-                                    "https://grafana.smartdevops.lat";
-                                  const dashboardPath = `/d/${dashboardUid}/${dashboardSlug}`;
-                                  const grafanaUrl = `${baseUrl}${dashboardPath}?var-namespace=${encodeURIComponent(
-                                    nsVal
-                                  )}&var-pod=${encodeURIComponent(it.name)}`;
-
-                                  window.open(grafanaUrl, "_blank");
-                                } catch (err) {
-                                  console.error(
-                                    "Failed to open Grafana:",
-                                    err
+                                  window.open(
+                                    `https://grafana.smartdevops.lat/d/${uid}/${slug}?var-namespace=${nsVal}&var-pod=${it.name}`,
+                                    "_blank"
                                   );
-                                  alert("Failed to open Grafana dashboard");
+                                } catch (err) {
+                                  alert("Failed to open Grafana");
                                 }
                               }}
-                              className="px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-white transition-all shadow-[0_0_8px_rgba(0,255,255,0.1)]"
+                              className="px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 hover:scale-105"
                             >
                               Monitor
                             </button>
 
-                            {/* 🔹 Open App */}
+                            {/* OPEN APP */}
                             <button
-                              onClick={() => {
-                                if (it.available > 0)
-                                  window.open(appUrl, "_blank");
-                              }}
+                              onClick={() => it.available > 0 && window.open(appUrl, "_blank")}
                               disabled={it.available < 1}
-                              className={`px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 hover:border-cyan-400 hover:bg-cyan-400/10 hover:text-white transition-all shadow-[0_0_8px_rgba(0,255,255,0.1)] ${
-                                it.available < 1
-                                  ? "opacity-40 cursor-not-allowed"
-                                  : ""
+                              className={`px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 ${
+                                it.available < 1 ? "opacity-40 cursor-not-allowed" : "hover:scale-105"
                               }`}
                             >
                               Open App
+                            </button>
+
+                            {/* DELETE BUTTON */}
+                            <button
+                              onClick={() => setDeleteTarget({ ns, name: it.name })}
+                              className="px-4 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-600/20 hover:border-red-400 hover:text-white transition-all shadow-[0_0_8px_rgba(255,0,0,0.2)]"
+                            >
+                              Delete
                             </button>
                           </div>
                         </td>
@@ -333,15 +339,9 @@ export default function AppsPage() {
 
                   {items.length === 0 && (
                     <tr>
-                      <td
-                        colSpan={8}
-                        className="px-6 py-6 text-center text-white/60"
-                      >
+                      <td colSpan={8} className="px-6 py-6 text-center text-white/60">
                         No applications found.{" "}
-                        <a
-                          href="/dashboard/apps/new"
-                          className="text-cyan-400 hover:underline"
-                        >
+                        <a href="/dashboard/apps/new" className="text-cyan-400 hover:underline">
                           Deploy one here
                         </a>
                         .
