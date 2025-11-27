@@ -156,43 +156,40 @@ export default function AppsPage() {
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
     </svg>
   );
+{/* 🔥 Delete Confirmation Modal */}
+{deleteTarget && (
+  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+    <div className="bg-[#0d1a29] border border-cyan-400/20 rounded-2xl p-6 w-full max-w-md shadow-[0_0_25px_rgba(0,255,255,0.2)]">
+      <h3 className="text-xl font-bold text-cyan-300 mb-4">Delete Application</h3>
 
-  return (
-    <RequireAuth>
-      {/* 🔥 Delete Confirmation Modal */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-[#0d1a29] border border-cyan-400/20 rounded-2xl p-6 w-full max-w-md shadow-[0_0_25px_rgba(0,255,255,0.2)]">
-            <h3 className="text-xl font-bold text-cyan-300 mb-4">Delete Application</h3>
+      <p className="text-white/80 mb-6">
+        Are you sure you want to delete:
+        <br />
+        <span className="text-cyan-400 font-semibold">{deleteTarget.name}</span>?
+        <br />
+        This will remove the Deployment, Service, Ingress and Blue-Green preview.
+      </p>
 
-            <p className="text-white/80 mb-6">
-              Are you sure you want to delete:
-              <br />
-              <span className="text-cyan-400 font-semibold">{deleteTarget.name}</span>?
-              <br />
-              This will remove the Deployment, Service, Ingress and Blue-Green preview.
-            </p>
+      <div className="flex justify-end gap-3">
+        <button
+          onClick={() => setDeleteTarget(null)}
+          className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition"
+        >
+          Cancel
+        </button>
 
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={doDeleteApp}
-                disabled={deleting}
-                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 transition flex items-center gap-2"
-              >
-                {deleting && <Spinner />}
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        <button
+          onClick={doDeleteApp}
+          disabled={deleting}
+          className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 transition flex items-center gap-2"
+        >
+          {deleting && <Spinner />}
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       <main className="relative min-h-screen bg-[#050b14] text-white">
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a1625] via-[#07111d] to-black -z-10" />
