@@ -91,7 +91,9 @@ export default function DocsPage() {
             <p className="text-white/80 mt-3">Available actions:</p>
             <ul className="list-disc pl-6 text-white/80 space-y-2 mt-2">
               <li><strong>Restart App</strong> — recreates your Pods</li>
-             {/* <li><strong>Open App</strong> — Open And Use Your App Safly</li>*/}
+              <li><strong>Open App</strong> — Open And Use Your App Safly</li>
+              <li><strong>Monitor</strong> — Monitor Your App health In Grafana Dashboard</li>
+              <li><strong>Scale</strong> — Scale Your App To Make It Highly Available</li>
             </ul>
           </div>
 
