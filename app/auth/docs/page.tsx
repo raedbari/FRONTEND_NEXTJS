@@ -91,7 +91,7 @@ export default function DocsPage() {
             <p className="text-white/80 mt-3">Available actions:</p>
             <ul className="list-disc pl-6 text-white/80 space-y-2 mt-2">
               <li><strong>Restart App</strong> — recreates your Pods</li>
-             {/* <li><strong>Delete App</strong> — removes the deployment completely</li>*/}
+             {/* <li><strong>Open App</strong> — Open And Use Your App Safly</li>*/}
             </ul>
           </div>
 
