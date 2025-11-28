@@ -316,18 +316,18 @@ export default function AppsPage() {
                             </button>
 
                             {/* DELETE */}
-                            <button
-                              onClick={() =>
-                                 setDeleteTarget({
-                                                  ns,
-                                   name: it.name.trim().replace(/[^a-zA-Z0-9\-]/g, ""), 
-                                            })
-                                            }
+                          <button
+  onClick={() =>
+    setDeleteTarget({
+      ns,
+      name: it.name.trim().replace(/[^a-zA-Z0-9\-]/g, ""),
+    })
+  }
+  className="px-4 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-600/20 hover:border-red-400 hover:text-white transition-all shadow-[0_0_8px_rgba(255,0,0,0.2)]"
+>
+  Delete
+</button>
 
-                              className="px-4 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-600/20"
-                            >
-                              Delete
-                            </button>
                           </div>
                         </td>
                       </tr>
