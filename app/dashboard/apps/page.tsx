@@ -156,7 +156,7 @@ export default function AppsPage() {
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
     </svg>
   );
-{/* 🔥 Delete Confirmation Modal */}
+ {/* 🔥 Delete Confirmation Modal */}
 {deleteTarget && (
   <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
     <div className="bg-[#0d1a29] border border-cyan-400/20 rounded-2xl p-6 w-full max-w-md shadow-[0_0_25px_rgba(0,255,255,0.2)]">
@@ -179,7 +179,7 @@ export default function AppsPage() {
         </button>
 
         <button
-          onClick={doDeleteApp}
+          onClick={() => doDeleteApp(deleteTarget.ns, deleteTarget.name)}
           disabled={deleting}
           className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 transition flex items-center gap-2"
         >
@@ -191,166 +191,186 @@ export default function AppsPage() {
   </div>
 )}
 
-      <main className="relative min-h-screen bg-[#050b14] text-white">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a1625] via-[#07111d] to-black -z-10" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,255,0.1),transparent_70%)] blur-3xl -z-10" />
+<main className="relative min-h-screen bg-[#050b14] text-white">
+  <div className="absolute inset-0 bg-gradient-to-b from-[#0a1625] via-[#07111d] to-black -z-10" />
+  <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,255,0.1),transparent_70%)] blur-3xl -z-10" />
 
-        <div className="max-w-6xl mx-auto p-8">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-cyan-300 drop-shadow-[0_0_12px_rgba(0,255,255,0.5)]">
-              Applications
-            </h2>
-            <button
-              onClick={load}
-              disabled={loading}
-              className="px-5 py-2 rounded-xl border border-cyan-500/30 text-cyan-300 hover:text-white hover:border-cyan-400 hover:bg-cyan-400/10 transition-all duration-200 flex items-center gap-2 shadow-[0_0_12px_rgba(0,255,255,0.2)]"
-            >
-              {loading && <Spinner />}
-              {loading ? "Refreshing…" : "Refresh"}
-            </button>
-          </div>
+  <div className="max-w-6xl mx-auto p-8">
+    <div className="flex items-center justify-between mb-8">
+      <h2 className="text-3xl font-bold text-cyan-300 drop-shadow-[0_0_12px_rgba(0,255,255,0.5)]">
+        Applications
+      </h2>
 
-          {err && (
-            <div className="border border-rose-800 bg-rose-900/30 text-rose-300 text-sm rounded-lg px-4 py-3 mb-4 shadow-[0_0_12px_rgba(255,0,0,0.2)]">
-              {err}
-            </div>
-          )}
+      <button
+        onClick={load}
+        disabled={loading}
+        className="px-5 py-2 rounded-xl border border-cyan-500/30 text-cyan-300 hover:text-white hover:border-cyan-400 hover:bg-cyan-400/10 transition-all duration-200 flex items-center gap-2 shadow-[0_0_12px_rgba(0,255,255,0.2)]"
+      >
+        {loading && <Spinner />}
+        {loading ? "Refreshing…" : "Refresh"}
+      </button>
+    </div>
 
-          {!loading && !err && (
-            <div className="overflow-x-auto rounded-2xl border border-cyan-400/10 bg-[rgba(10,20,30,0.5)] backdrop-blur-xl shadow-[0_0_25px_rgba(0,255,255,0.1)]">
-              <table className="w-full text-sm text-white/90">
-                <thead className="bg-cyan-500/10 text-cyan-300">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Namespace</th>
-                    <th className="px-4 py-3 text-left">Name</th>
-                    <th className="px-4 py-3 text-left">Image</th>
-                    <th className="px-4 py-3">Desired</th>
-                    <th className="px-4 py-3">Current</th>
-                    <th className="px-4 py-3">Available</th>
-                    <th className="px-4 py-3">Updated</th>
-                    <th className="px-4 py-3">Actions</th>
-                  </tr>
-                </thead>
+    {err && (
+      <div className="border border-rose-800 bg-rose-900/30 text-rose-300 text-sm rounded-lg px-4 py-3 mb-4 shadow-[0_0_12px_rgba(255,0,0,0.2)]">
+        {err}
+      </div>
+    )}
 
-                <tbody>
-                  {items.map((it) => {
-                    const ns = it.namespace ?? "default";
-                    const isBusy = working === it.name;
-                    const appUrl = `https://${it.name}.${ns}.apps.smartdevops.lat`;
+    {!loading && !err && (
+      <div className="overflow-x-auto rounded-2xl border border-cyan-400/10 bg-[rgba(10,20,30,0.5)] backdrop-blur-xl shadow-[0_0_25px_rgba(0,255,255,0.1)]">
+        <table className="w-full text-sm text-white/90">
+          <thead className="bg-cyan-500/10 text-cyan-300">
+            <tr>
+              <th className="px-4 py-3 text-left">Namespace</th>
+              <th className="px-4 py-3 text-left">Name</th>
+              <th className="px-4 py-3 text-left">Image</th>
+              <th className="px-4 py-3">Desired</th>
+              <th className="px-4 py-3">Current</th>
+              <th className="px-4 py-3">Available</th>
+              <th className="px-4 py-3">Updated</th>
+              <th className="px-4 py-3">Actions</th>
+            </tr>
+          </thead>
 
-                    return (
-                      <tr key={`${ns}/${it.name}`} className="border-t border-white/10 hover:bg-white/5 transition-all">
-                        <td className="px-4 py-3 text-white/70">{ns}</td>
-                        <td className="px-4 py-3 font-semibold text-cyan-300">{it.name}</td>
+          <tbody>
+            {items.map((it) => {
+              const ns = it.namespace ?? "default";
+              const isBusy = working === it.name;
+              const appUrl = `https://${it.name}.${ns}.apps.smartdevops.lat`;
 
-                        <td className="px-4 py-3 font-mono truncate max-w-[240px] text-white/80" title={it.image}>
-                          {it.image}
-                        </td>
+              return (
+                <tr
+                  key={`${ns}/${it.name}`}
+                  className="border-t border-white/10 hover:bg-white/5 transition-all"
+                >
+                  <td className="px-4 py-3 text-white/70">{ns}</td>
+                  <td className="px-4 py-3 font-semibold text-cyan-300">{it.name}</td>
 
-                        <td className="px-4 py-3 text-center">{it.desired}</td>
-                        <td className="px-4 py-3 text-center">{it.current}</td>
-                        <td className="px-4 py-3 text-center">{it.available}</td>
-                        <td className="px-4 py-3 text-center">{it.updated}</td>
+                  <td
+                    className="px-4 py-3 font-mono truncate max-w-[240px] text-white/80"
+                    title={it.image}
+                  >
+                    {it.image}
+                  </td>
 
-                        <td className="px-4 py-3">
-                          <div className="flex flex-wrap gap-2 items-center justify-center">
-                            <input
-                              type="number"
-                              min={0}
-                              defaultValue={it.desired}
-                              className="rounded-lg bg-black/30 border border-cyan-500/20 text-white/80 w-20 text-center"
-                              onChange={(e) =>
-                                setScaling((s) => ({
-                                  ...s,
-                                  [it.name]: Number(e.target.value),
-                                }))
-                              }
-                              disabled={isBusy}
-                            />
+                  <td className="px-4 py-3 text-center">{it.desired}</td>
+                  <td className="px-4 py-3 text-center">{it.current}</td>
+                  <td className="px-4 py-3 text-center">{it.available}</td>
+                  <td className="px-4 py-3 text-center">{it.updated}</td>
 
-                            {/* SCALE */}
-                            <button
-                              onClick={() => doScale(it.name, scaling[it.name] ?? it.desired)}
-                              disabled={isBusy}
-                              className={`px-4 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all ${
-                                isBusy
-                                  ? "bg-cyan-700/40 cursor-not-allowed"
-                                  : "bg-gradient-to-r from-cyan-600 to-cyan-500 hover:scale-105"
-                              }`}
-                            >
-                              {isBusy && <Spinner />}
-                              {isBusy ? "Scaling…" : "Scale"}
-                            </button>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-2 items-center justify-center">
+                      {/* SCALE INPUT */}
+                      <input
+                        type="number"
+                        min={0}
+                        defaultValue={it.desired}
+                        className="rounded-lg bg-black/30 border border-cyan-500/20 text-white/80 w-20 text-center"
+                        onChange={(e) =>
+                          setScaling((s) => ({
+                            ...s,
+                            [it.name]: Number(e.target.value),
+                          }))
+                        }
+                        disabled={isBusy}
+                      />
 
-                            {/* MONITOR */}
-                            <button
-                              onClick={() => {
-                                try {
-                                  const nsVal = ns;
-                                  const role = user?.role || "client";
-                                  let uid = "";
-                                  let slug = "";
-                                  if (role === "client") {
-                                    uid = "client-dashboard";
-                                    slug = "smartdevops-client-dashboard";
-                                  } else {
-                                    uid = "4XuMd2liz";
-                                    slug = "smartdevops-engineer-dashboard";
-                                  }
-                                  window.open(
-                                    `https://grafana.smartdevops.lat/d/${uid}/${slug}?var-namespace=${nsVal}&var-pod=${it.name}`,
-                                    "_blank"
-                                  );
-                                } catch (err) {
-                                  alert("Failed to open Grafana");
-                                }
-                              }}
-                              className="px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 hover:scale-105"
-                            >
-                              Monitor
-                            </button>
+                      {/* SCALE BUTTON */}
+                      <button
+                        onClick={() =>
+                          doScale(it.name, scaling[it.name] ?? it.desired)
+                        }
+                        disabled={isBusy}
+                        className={`px-4 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all ${
+                          isBusy
+                            ? "bg-cyan-700/40 cursor-not-allowed"
+                            : "bg-gradient-to-r from-cyan-600 to-cyan-500 hover:scale-105"
+                        }`}
+                      >
+                        {isBusy && <Spinner />}
+                        {isBusy ? "Scaling…" : "Scale"}
+                      </button>
 
-                            {/* OPEN APP */}
-                            <button
-                              onClick={() => it.available > 0 && window.open(appUrl, "_blank")}
-                              disabled={it.available < 1}
-                              className={`px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 ${
-                                it.available < 1 ? "opacity-40 cursor-not-allowed" : "hover:scale-105"
-                              }`}
-                            >
-                              Open App
-                            </button>
+                      {/* MONITOR BUTTON */}
+                      <button
+                        onClick={() => {
+                          try {
+                            const role = user?.role || "client";
+                            let uid = "";
+                            let slug = "";
 
-                            {/* DELETE BUTTON */}
-                            <button
-                              onClick={() => setDeleteTarget({ ns, name: it.name })}
-                              className="px-4 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-600/20 hover:border-red-400 hover:text-white transition-all shadow-[0_0_8px_rgba(255,0,0,0.2)]"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                            if (role === "client") {
+                              uid = "client-dashboard";
+                              slug = "smartdevops-client-dashboard";
+                            } else {
+                              uid = "4XuMd2liz";
+                              slug = "smartdevops-engineer-dashboard";
+                            }
 
-                  {items.length === 0 && (
-                    <tr>
-                      <td colSpan={8} className="px-6 py-6 text-center text-white/60">
-                        No applications found.{" "}
-                        <a href="/dashboard/apps/new" className="text-cyan-400 hover:underline">
-                          Deploy one here
-                        </a>
-                        .
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </main>
-    </RequireAuth>
-  );
-}
+                            window.open(
+                              `https://grafana.smartdevops.lat/d/${uid}/${slug}?var-namespace=${ns}&var-pod=${it.name}`,
+                              "_blank"
+                            );
+                          } catch (err) {
+                            alert("Failed to open Grafana");
+                          }
+                        }}
+                        className="px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 hover:scale-105"
+                      >
+                        Monitor
+                      </button>
+
+                      {/* OPEN APP */}
+                      <button
+                        onClick={() =>
+                          it.available > 0 && window.open(appUrl, "_blank")
+                        }
+                        disabled={it.available < 1}
+                        className={`px-4 py-1.5 rounded-lg border border-cyan-500/20 text-cyan-300 ${
+                          it.available < 1
+                            ? "opacity-40 cursor-not-allowed"
+                            : "hover:scale-105"
+                        }`}
+                      >
+                        Open App
+                      </button>
+
+                      {/* DELETE BUTTON */}
+                      <button
+                        onClick={() =>
+                          setDeleteTarget({ ns, name: it.name })
+                        }
+                        className="px-4 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-600/20 hover:border-red-400 hover:text-white transition-all shadow-[0_0_8px_rgba(255,0,0,0.2)]"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+
+            {items.length === 0 && (
+              <tr>
+                <td
+                  colSpan={8}
+                  className="px-6 py-6 text-center text-white/60"
+                >
+                  No applications found.{" "}
+                  <a
+                    href="/dashboard/apps/new"
+                    className="text-cyan-400 hover:underline"
+                  >
+                    Deploy one here
+                  </a>
+                  .
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+</main>
