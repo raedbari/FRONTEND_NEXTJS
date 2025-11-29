@@ -46,18 +46,21 @@ function withAuthHeaders(init?: RequestInit): RequestInit {
     credentials: "omit",
   };
 }
-
 // ==========================
 //  GET Wrapper
 // ==========================
 export async function apiGet(path: string, init?: RequestInit) {
   const base = getApiBase();
 
-  const res = await fetch(`${base}${path}`, withAuthHeaders(init));
+  // ALWAYS prefix with /api
+  const url = `${base}${path}`;
+
+  const res = await fetch(url, withAuthHeaders(init));
 
   if (res.status === 401 || res.status === 403) {
     throw new Error("unauthorized");
   }
+
   if (!res.ok) {
     throw new Error(await res.text());
   }
@@ -71,13 +74,19 @@ export async function apiGet(path: string, init?: RequestInit) {
 export async function apiPost(path: string, body?: any) {
   const base = getApiBase();
 
-  const res = await fetch(`${base}${path}`, withAuthHeaders({
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  }));
+  // ALWAYS prefix with /api
+  const url = `${base}${path}`;
+
+  const res = await fetch(
+    url,
+    withAuthHeaders({
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body || {}),
+    })
+  );
 
   if (res.status === 401 || res.status === 403) {
     throw new Error("unauthorized");
