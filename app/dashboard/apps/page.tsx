@@ -114,27 +114,26 @@ export default function AppsPage() {
       setWorking(null);
     }
   }
+async function doDeleteApp() {
+  if (!deleteTarget) return;
 
-  async function doDeleteApp() {
-    if (!deleteTarget) return;
+  try {
+    setDeleting(true);
 
-    try {
-      setDeleting(true);
+    await apiPost("/apps/delete", {
+      ns: deleteTarget.ns,
+      name: deleteTarget.name,
+    });
 
-      await apiPost(
-        `/apps/delete?ns=${encodeURIComponent(deleteTarget.ns)}&name=${encodeURIComponent(
-          deleteTarget.name
-        )}`
-      );
-
-      setDeleteTarget(null);
-      await load();
-    } catch (err: any) {
-      alert(err?.message || "Delete failed");
-    } finally {
-      setDeleting(false);
-    }
+    setDeleteTarget(null);
+    await load();
+  } catch (err: any) {
+    alert(err?.message || "Delete failed");
+  } finally {
+    setDeleting(false);
   }
+}
+
 
   useEffect(() => {
     load();
@@ -161,40 +160,41 @@ export default function AppsPage() {
 
   return (
     <RequireAuth>
-      {/* 🔥 Delete Confirmation Modal */}
-      {deleteTarget && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-[#0d1a29] border border-cyan-400/20 rounded-2xl p-6 w-full max-w-md shadow-[0_0_25px_rgba(0,255,255,0.2)]">
-            <h3 className="text-xl font-bold text-cyan-300 mb-4">Delete Application</h3>
+{/* 🔥 Delete Confirmation Modal */}
+{deleteTarget && (
+  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+    <div className="bg-[#0d1a29] border border-cyan-400/20 rounded-2xl p-6 w-full max-w-md shadow-[0_0_25px_rgba(0,255,255,0.2)]">
+      <h3 className="text-xl font-bold text-cyan-300 mb-4">Delete Application</h3>
 
-            <p className="text-white/80 mb-6">
-              Are you sure you want to delete:
-              <br />
-              <span className="text-cyan-400 font-semibold">{deleteTarget.name}</span>?
-              <br />
-              This will remove the Deployment, Service, Ingress and Blue-Green preview.
-            </p>
+      <p className="text-white/80 mb-6">
+        Are you sure you want to delete:
+        <br />
+        <span className="text-cyan-400 font-semibold">{deleteTarget.name}</span>?
+        <br />
+        This will remove the Deployment, Service, Ingress and Blue-Green preview.
+      </p>
 
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition"
-              >
-                Cancel
-              </button>
+      <div className="flex justify-end gap-3">
+        <button
+          onClick={() => setDeleteTarget(null)}
+          className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition"
+        >
+          Cancel
+        </button>
 
-              <button
-                onClick={doDeleteApp}
-                disabled={deleting}
-                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 transition flex items-center gap-2"
-              >
-                {deleting && <Spinner />}
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        <button
+          onClick={doDeleteApp}
+          disabled={deleting}
+          className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 transition flex items-center gap-2"
+        >
+          {deleting && <Spinner />}
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       {/* MAIN PAGE */}
       <main className="relative min-h-screen bg-[#050b14] text-white">
@@ -316,17 +316,18 @@ export default function AppsPage() {
                             </button>
 
                             {/* DELETE */}
-                          <button
+<button
   onClick={() =>
     setDeleteTarget({
       ns,
-      name: it.name.trim().replace(/[^a-zA-Z0-9\-]/g, ""),
+      name: it.name,   
     })
   }
   className="px-4 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-600/20 hover:border-red-400 hover:text-white transition-all shadow-[0_0_8px_rgba(255,0,0,0.2)]"
 >
   Delete
 </button>
+
 
                           </div>
                         </td>
