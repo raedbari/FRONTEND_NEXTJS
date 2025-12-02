@@ -17,11 +17,32 @@ export default function LogsPage() {
 
   useEffect(() => {
     const load = async () => {
-      const res = await fetch("/api/logs/my", { credentials: "include" });
+      setLoading(true);
+
+      const token = localStorage.getItem("token"); // ← التوكن من تسجيل الدخول
+      if (!token) {
+        console.warn("No token found in localStorage");
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch("/api/logs/my", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        console.error("Failed to load logs:", await res.text());
+        setLoading(false);
+        return;
+      }
+
       const data = await res.json();
       setLogs(data.items || []);
       setLoading(false);
     };
+
     load();
   }, []);
 
