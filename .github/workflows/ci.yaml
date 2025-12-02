@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMAGE: raedbari/frontend         
-      TAG: ${{ github.sha }}           # ← وسم commit
+      TAG: ${{ github.sha }}          
       NEXT_PUBLIC_API_BASE: ${{ vars.NEXT_PUBLIC_API_BASE }}  
       SSR_API_BASE: ${{ vars.SSR_API_BASE }}
     steps:
@@ -45,7 +45,7 @@ jobs:
   deploy_to_k8s:
     name: Set image & rollout on cluster
     needs: build_and_push
-    runs-on: self-hosted            # لـrunnr عى EC2 الذي عليه kubectl موصول بالكلاستر
+    runs-on: self-hosted            
     env:
       IMAGE: raedbari/frontend
       TAG: ${{ github.sha }}
