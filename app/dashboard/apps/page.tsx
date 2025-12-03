@@ -214,7 +214,7 @@ async function doDeleteApp() {
               {loading ? "Refreshing…" : "Refresh"}
             </button>
           </div>
-
+            
           {err && (
             <div className="border border-rose-800 bg-rose-900/30 text-rose-300 p-4 rounded-lg mb-4">
               {err}
