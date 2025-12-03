@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface Log {
   id: number;
@@ -15,33 +15,55 @@ interface Log {
 export default function LogsPage() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
 
-  // ---------------------------------------
-  // 🟦 جلب السجلات
-  // ---------------------------------------
-  const loadLogs = async () => {
+  // 🟦 دالة واحدة لجلب اللوجات (تستخدم في أول تحميل + زر Refresh)
+  const loadLogs = useCallback(async () => {
     try {
-      setRefreshing(true);
-      const res = await fetch("/api/logs/my", { credentials: "include" });
+      setLoading(true);
+
+      // نقرأ التوكن من localStorage ونرسله كـ Bearer
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+      if (!token) {
+        setLogs([]);
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch("/api/logs/my", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        // في حالة 401 / 403 أو أي خطأ آخر
+        console.error("Failed to load logs:", res.status, await res.text());
+        setLogs([]);
+        setLoading(false);
+        return;
+      }
+
       const data = await res.json();
       setLogs(data.items || []);
-    } catch (e) {
-      console.error("Failed to load logs", e);
-    } finally {
       setLoading(false);
-      setRefreshing(false);
+    } catch (err) {
+      console.error("Error loading logs:", err);
+      setLogs([]);
+      setLoading(false);
     }
-  };
+  }, []);
 
+  // أول تحميل للصفحة
   useEffect(() => {
     loadLogs();
-  }, []);
+  }, [loadLogs]);
 
   return (
     <section
       className="relative p-8 rounded-2xl shadow-[0_0_30px_rgba(0,255,255,0.2)]
-                 border border-cyan-500/20 max-w-5xl mx-auto my-10
+                 border border-cyan-500/20 max-w-6xl mx-auto my-10
                  backdrop-blur-md bg-[rgba(10,20,30,0.7)]"
       style={{
         backgroundImage:
@@ -50,38 +72,42 @@ export default function LogsPage() {
     >
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-cyan-500/10 to-transparent blur-3xl" />
 
-      {/* العنوان + زر التحديث */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-300 bg-clip-text text-transparent">
-          📜 My Activity Logs
-        </h2>
+      {/* العنوان + زر Refresh في سطر واحد مثل Apps Status */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-3xl font-bold mb-1 bg-gradient-to-r from-cyan-400 to-blue-300 bg-clip-text text-transparent">
+            📜 My Activity Logs
+          </h2>
+          <p className="text-white/70">
+            Here you can see all actions you performed on your apps.
+          </p>
+        </div>
 
-        
+        {/* زر Refresh – نفس الستايل المنطقي لزر Apps Status */}
         <button
           onClick={loadLogs}
-          disabled={refreshing}
-          className={`px-5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 
-                      text-white font-medium shadow-[0_0_10px_rgba(0,255,255,0.4)]
-                      transition-all duration-200 ${
-                        refreshing ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+          className="px-6 py-2 rounded-full border border-cyan-400/80
+                     text-cyan-300 font-medium text-sm
+                     hover:bg-cyan-500/10 hover:text-cyan-100
+                     shadow-[0_0_15px_rgba(0,255,255,0.25)]
+                     hover:shadow-[0_0_25px_rgba(0,255,255,0.5)]
+                     transition-all duration-150"
         >
-          {refreshing ? "Refreshing…" : "Refresh"}
+          Refresh
         </button>
       </div>
 
-      <p className="text-white/70 mb-6">
-        Here you can see all actions you performed on your apps.
-      </p>
+      {/* حالة التحميل */}
+      {loading && <p className="text-cyan-300 mt-4">Loading logs…</p>}
 
-      {loading && <p className="text-cyan-300">Loading logs…</p>}
-
+      {/* لا توجد سجلات */}
       {!loading && logs.length === 0 && (
-        <p className="text-white/60">No logs found.</p>
+        <p className="text-white/60 mt-4">No logs found.</p>
       )}
 
+      {/* جدول اللوجات */}
       {!loading && logs.length > 0 && (
-        <table className="w-full border-separate border-spacing-y-2">
+        <table className="w-full border-separate border-spacing-y-2 mt-4">
           <thead>
             <tr>
               <th className="text-cyan-300 text-left px-3">Time</th>
@@ -97,7 +123,7 @@ export default function LogsPage() {
                   {new Date(log.created_at).toLocaleString()}
                 </td>
 
-                <td className="px-3 py-2 bg-[#0b1b2d]/60 border border-cyan-500/20 rounded-lg text-cyan-300">
+                <td className="px-3 py-2 bg-[#0b1b2d]/60 border border-cyan-500/20 rounded-lg text-cyan-200">
                   {log.user}
                 </td>
 
