@@ -201,7 +201,7 @@ async function doDeleteApp() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a1625] via-[#07111d] to-black -z-10" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,255,0.1),transparent_70%)] blur-3xl -z-10" />
 
-        <div className="max-w-6xl mx-auto p-8">
+        <div className="w-full mx-auto p-8">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-3xl font-bold text-cyan-300">Applications</h2>
 
