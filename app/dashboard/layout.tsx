@@ -4,17 +4,14 @@ import Link from "next/link";
 import "../globals.css";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import LogoIcon from "@/components/LogoIcon"; 
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
-  const [role, setRole] = useState<string | null>(null);
   const [myCount, setMyCount] = useState<number>(0);
-  const [adminCount, setAdminCount] = useState<number>(0);
 
   // -------------------------------------------------------
-  // 🟦 قراءة JWT + منع الدخول بدون تسجيل
+  // 🟦 قراءة JWT + منع الدخول بدون تسجيل دخول
   // -------------------------------------------------------
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -26,10 +23,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
 
-      // role
-      setRole(payload.role || null);
-
-      // token expiry
+      // التحقق من انتهاء الصلاحية
       const exp = payload?.exp ? payload.exp * 1000 : 0;
       if (Date.now() >= exp) {
         localStorage.removeItem("token");
@@ -42,27 +36,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [router]);
 
   // -------------------------------------------------------
-  // 🟦 تحميل عداد السجلات (My Logs + Admin Logs إن كان أدمن)
+  // 🟦 تحميل عدد سجلات المستخدم
   // -------------------------------------------------------
   useEffect(() => {
     const loadCounts = async () => {
       try {
-        // My Logs Count
-        const myRes = await fetch("/api/logs/my", { credentials: "include" });
-        const myData = await myRes.json();
-        setMyCount(myData.count || 0);
+        const res = await fetch("/api/logs/my", { credentials: "include" });
+        if (!res.ok) return;
 
-        // Admin Logs Count (للأدمن فقط)
-        if (role === "admin" || role === "platform_admin") {
-          const adRes = await fetch("/api/logs", { credentials: "include" });
-          const adData = await adRes.json();
-          setAdminCount(adData.count || 0);
-        }
+        const data = await res.json();
+        setMyCount(data.count || 0);
       } catch {}
     };
 
     loadCounts();
-  }, [role]);
+  }, []);
 
   // -------------------------------------------------------
   // 🔴 تسجيل خروج
@@ -75,14 +63,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   // Badge UI
-  const Badge = ({ count, color = "cyan" }: { count: number; color?: string }) => (
-    <span
-      className={`ml-1 px-2 py-0.5 text-xs rounded-full text-black font-semibold ${
-        color === "cyan"
-          ? "bg-cyan-400 shadow-[0_0_10px_rgba(0,255,255,0.5)]"
-          : "bg-rose-500 shadow-[0_0_10px_rgba(255,0,100,0.5)]"
-      }`}
-    >
+  const Badge = ({ count }: { count: number }) => (
+    <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-cyan-400 text-black font-semibold shadow-[0_0_10px_rgba(0,255,255,0.5)]">
       {count}
     </span>
   );
@@ -90,70 +72,44 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <html lang="en">
       <body className="min-h-screen flex flex-col bg-[#050b14] text-white relative overflow-hidden">
-        {/* 🔮 خلفية */}
+        {/* خلفية */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a1625] via-[#07111d] to-black" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_center,rgba(0,255,255,0.15),transparent_70%)] blur-3xl" />
 
         {/* 🧭 NAVBAR */}
         <header className="relative border-b border-cyan-500/20 bg-[rgba(10,20,30,0.7)] backdrop-blur-md shadow-[0_0_25px_rgba(0,255,255,0.1)]">
           <nav className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
+
             <div className="flex items-center gap-8">
-              {/* LOGO */}
+
+              {/* LOGO TEXT فقط بدون أي icon */}
               <Link
                 href="/dashboard/apps"
-                className="font-semibold text-white hover:text-cyan-400 transition duration-200 text-lg tracking-wide flex items-center gap-2"
+                className="font-semibold text-white hover:text-cyan-400 transition duration-200 text-lg tracking-wide"
               >
-                <LogoIcon size={22} />
                 Smart <span className="text-cyan-400">DevOps</span>
               </Link>
 
-              {/* LINKS */}
-              <Link
-                href="/dashboard/apps"
-                className="flex items-center gap-2 hover:text-cyan-300 transition"
-              >
-                <LogoIcon size={16} />
+              {/* LINKS بدون Icon */}
+              <Link href="/dashboard/apps" className="hover:text-cyan-300 transition">
                 Apps Status
               </Link>
 
-              <Link
-                href="/dashboard/deploy"
-                className="flex items-center gap-2 hover:text-cyan-300 transition"
-              >
-                <LogoIcon size={16} />
+              <Link href="/dashboard/deploy" className="hover:text-cyan-300 transition">
                 Deploy
               </Link>
 
-              <Link
-                href="/dashboard/apps/bluegreen"
-                className="flex items-center gap-2 hover:text-cyan-300 transition"
-              >
-                <LogoIcon size={16} />
+              <Link href="/dashboard/apps/bluegreen" className="hover:text-cyan-300 transition">
                 Blue-Green
               </Link>
 
-              {/* 🔵 My Logs */}
-              <Link
-                href="/dashboard/MyLogs"
-                className="flex items-center gap-2 hover:text-cyan-300 transition"
-              >
-                <LogoIcon size={16} />
-                My Logs <Badge count={myCount} color="cyan" />
+              {/* My Logs */}
+              <Link href="/dashboard/MyLogs" className="hover:text-cyan-300 transition flex items-center">
+                My Logs <Badge count={myCount} />
               </Link>
-
-              {/* 🛡️ Admin Logs */}
-              {/* {role === "admin" || role === "platform_admin" ? (
-                <Link
-                  href="/dashboard/admin/Logs"
-                  className="flex items-center gap-2 hover:text-cyan-300 transition"
-                >
-                  <LogoIcon size={16} />
-                  Admin Logs <Badge count={adminCount} color="rose" />
-                </Link>
-              ) : null} */}
             </div>
 
-            {/* زر خروج */}
+            {/* زر الخروج */}
             <button
               onClick={logout}
               className="px-5 py-2 rounded-lg bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-medium text-sm shadow-[0_0_10px_rgba(255,0,80,0.4)] transition-all"
@@ -163,10 +119,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
         </header>
 
-        {/* 📊 المحتوى */}
+        {/* المحتوى */}
         <main className="relative flex-1 container py-10 px-6">{children}</main>
 
-        {/* ⚙️ Footer */}
+        {/* Footer */}
         <footer className="relative border-t border-cyan-500/20 bg-[rgba(10,20,30,0.7)] backdrop-blur-md text-center py-5 text-sm text-white/60 shadow-[0_0_20px_rgba(0,255,255,0.05)]">
           <p>Smart DevOps Platform — Dashboard © {new Date().getFullYear()}</p>
         </footer>
