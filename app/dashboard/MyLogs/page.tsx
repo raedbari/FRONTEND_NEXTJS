@@ -14,16 +14,43 @@ export default function LogsPage() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const load = async () => {
-      const token = localStorage.getItem("token");
+  // 🔄 Spinner نفس الذي في صفحة Apps
+  const Spinner = () => (
+    <svg
+      className="animate-spin h-4 w-4 text-cyan-300"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+      />
+    </svg>
+  );
 
-      if (!token) {
-        console.error("No token found");
-        setLoading(false);
-        return;
-      }
+  // 🔄 دالة Refresh
+  async function load() {
+    setLoading(true);
 
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      console.error("No token found");
+      setLoading(false);
+      return;
+    }
+
+    try {
       const res = await fetch("https://smartdevops.lat/api/logs/my", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -36,22 +63,43 @@ export default function LogsPage() {
 
       const data = await res.json();
       setLogs(data.items || []);
-      setLoading(false);
-    };
+    } catch (err) {
+      console.error("Error loading logs:", err);
+    }
 
+    setLoading(false);
+  }
+
+  useEffect(() => {
     load();
   }, []);
 
   return (
-    <section className="relative p-8 rounded-2xl shadow-[0_0_30px_rgba(0,255,255,0.2)]
+    <section
+      className="relative p-8 rounded-2xl shadow-[0_0_30px_rgba(0,255,255,0.2)]
                  border border-cyan-500/20 max-w-5xl mx-auto my-10
-                 backdrop-blur-md bg-[rgba(10,20,30,0.7)]">
-      <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent">
-        📜 My Activity Logs
-      </h2>
+                 backdrop-blur-md bg-[rgba(10,20,30,0.7)]"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent">
+          📜 My Activity Logs
+        </h2>
+
+        {/* 🔥 زر Refresh الجديد */}
+        <button
+          onClick={load}
+          disabled={loading}
+          className="px-5 py-2 rounded-xl border border-cyan-500/30 text-cyan-300 flex gap-2"
+        >
+          {loading && <Spinner />}
+          {loading ? "Refreshing…" : "Refresh"}
+        </button>
+      </div>
 
       {loading && <p className="text-cyan-300">Loading logs…</p>}
-      {!loading && logs.length === 0 && <p className="text-white/60">No logs found.</p>}
+      {!loading && logs.length === 0 && (
+        <p className="text-white/60">No logs found.</p>
+      )}
 
       {!loading && logs.length > 0 && (
         <table className="w-full border-separate border-spacing-y-2">
