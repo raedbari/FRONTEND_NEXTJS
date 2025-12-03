@@ -142,7 +142,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Link>
 
               {/* 🛡️ Admin Logs */}
-              {role === "admin" || role === "platform_admin" ? (
+              {/* {role === "admin" || role === "platform_admin" ? (
                 <Link
                   href="/dashboard/admin/Logs"
                   className="flex items-center gap-2 hover:text-cyan-300 transition"
@@ -150,7 +150,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <LogoIcon size={16} />
                   Admin Logs <Badge count={adminCount} color="rose" />
                 </Link>
-              ) : null}
+              ) : null} */}
             </div>
 
             {/* زر خروج */}

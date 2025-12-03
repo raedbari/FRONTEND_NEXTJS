@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 interface Log {
   id: number;
+  user_email: string;
   action: string;
   details: any;
   ip: string;
@@ -17,26 +18,12 @@ export default function LogsPage() {
 
   useEffect(() => {
     const load = async () => {
-      setLoading(true);
-
-      const token = localStorage.getItem("token"); // ← التوكن من تسجيل الدخول
-      if (!token) {
-        console.warn("No token found in localStorage");
-        setLoading(false);
-        return;
-      }
+      const token = localStorage.getItem("token");
+      if (!token) return;
 
       const res = await fetch("/api/logs/my", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!res.ok) {
-        console.error("Failed to load logs:", await res.text());
-        setLoading(false);
-        return;
-      }
 
       const data = await res.json();
       setLogs(data.items || []);
@@ -77,15 +64,21 @@ export default function LogsPage() {
           <thead>
             <tr>
               <th className="text-cyan-300 text-left px-3">Time</th>
+              <th className="text-cyan-300 text-left px-3">User</th>
               <th className="text-cyan-300 text-left px-3">Action</th>
               <th className="text-cyan-300 text-left px-3">Details</th>
             </tr>
           </thead>
+
           <tbody>
             {logs.map((log) => (
               <tr key={log.id}>
                 <td className="px-3 py-2 bg-[#0b1b2d]/60 border border-cyan-500/20 rounded-lg text-white">
                   {new Date(log.created_at).toLocaleString()}
+                </td>
+
+                <td className="px-3 py-2 bg-[#0b1b2d]/60 border border-cyan-500/20 rounded-lg text-purple-300">
+                  {log.user_email}
                 </td>
 
                 <td className="px-3 py-2 bg-[#0b1b2d]/60 border border-cyan-500/20 rounded-lg text-cyan-300">
