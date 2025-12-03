@@ -222,8 +222,8 @@ async function doDeleteApp() {
           )}
 
           {!loading && !err && (
-            <div className="w-full rounded-2xl border border-cyan-400/10 bg-[rgba(10,20,30,0.5)] shadow-lg overflow-visible">
-              <table className="w-full text-sm text-white/90">
+            <div className="w-full rounded-2xl border border-cyan-400/10 bg-[rgba(10,20,30,0.5)] shadow-lg overflow-hidden">
+              <table className="min-w-full text-sm text-white/90">
                 <thead className="bg-cyan-500/10 text-cyan-300">
                   <tr>
                     <th className="px-4 py-3">Namespace</th>
